@@ -1,0 +1,23 @@
+### Auth
+POST http://localhost:8080/api/auth/signup
+Content-Type: application/json
+
+{ "email":"neo@example.com", "username":"Neo", "password":"pass" }
+
+### Login
+POST http://localhost:8080/api/auth/login
+Content-Type: application/json
+
+{ "email":"neo@example.com", "password":"pass" }
+
+### Me
+GET http://localhost:8080/api/auth/me
+
+### Create Schedule
+POST http://localhost:8080/api/schedules
+Content-Type: application/json
+
+{ "title":"첫 일정", "content":"내용" }
+
+### List Schedules
+GET http://localhost:8080/api/schedules?page=0&size=10

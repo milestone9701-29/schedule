@@ -1,0 +1,46 @@
+plugins {
+    id("org.springframework.boot") version "3.5.7"
+    id("io.spring.dependency-management") version "1.1.7"
+    id("java")
+}
+
+group = "com.tr"
+version = "0.0.1-SNAPSHOT"
+description = "schedule"
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    // 2025-11-13 : starter-web, data-jpa, validation.
+    implementation("org.springframework.boot:spring-boot-starter-web")
+    implementation("org.springframework.boot:spring-boot-starter-data-jpa")
+    implementation("org.springframework.boot:spring-boot-starter-validation")
+
+    // 2025-11-13 : webMVC ui : 활용 실습 인지.
+    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.13")
+
+    // 2025-11-13 : lombok : 2개 다 필요.
+    compileOnly("org.projectlombok:lombok")
+    annotationProcessor("org.projectlombok:lombok")
+
+    // 2025-11-13 : SQL
+    runtimeOnly("com.mysql:mysql-connector-j")
+
+    //
+
+
+    testImplementation("org.springframework.boot:spring-boot-starter-test")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}

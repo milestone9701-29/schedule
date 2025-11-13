@@ -1,0 +1,39 @@
+package com.tr.schedule.comment;
+
+
+import com.tr.schedule.common.BaseTimeEntity;
+import com.tr.schedule.schedule.Schedule;
+import com.tr.schedule.user.User;
+import jakarta.persistence.*;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+// id content author
+// Schedule : owner(일정 소유자) Comment : author(작성자)
+
+@Getter
+@NoArgsConstructor(access=AccessLevel.PROTECTED)
+@Entity
+@Table(name="comments", indexes={@Index(name="idx_conments_schedule_created", columnList="schedule_id, created_at")})
+public class Comment extends BaseTimeEntity {
+    @Id @GeneratedValue(strategy= GenerationType.IDENTITY)
+    private Long id;
+    @ManyToOne(fetch=FetchType.LAZY, optional=false)
+    @JoinColumn(name="schedule_id", nullable=false)
+    private Schedule schedule;
+    @ManyToOne(fetch=FetchType.LAZY)
+    @JoinColumn(name="user_id", nullable=false)
+    private User author;
+    @Column(nullable=false, length=100)
+    private String content;
+
+    @Version
+    private Long version;
+
+    // 직접 작성 : schedule, author, content
+    public Comment(Schedule schedule, User author, String content) {
+        this.schedule = schedule;
+        this.author = author;
+        this.content = content;
+    }
+}

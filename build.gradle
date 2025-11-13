@@ -27,16 +27,17 @@ dependencies {
     // 2025-11-13 : webMVC ui : 활용 실습 인지.
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.13")
 
+    // 2025-11-13 : Spring Security Crypto
+    implementation ("org.springframework.security:spring-security-crypto")
+
     // 2025-11-13 : lombok : 2개 다 필요.
     compileOnly("org.projectlombok:lombok")
     annotationProcessor("org.projectlombok:lombok")
 
-    // 2025-11-13 : SQL
+    // 2025-11-13 : SQL connector
     runtimeOnly("com.mysql:mysql-connector-j")
 
-    //
-
-
+    // test
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }

@@ -2,7 +2,7 @@
 
 - [ ] 3-Layer, JPA, MySQL, Lombok, Auditing(수정 - 삭제)
 - [ ] 회원가입, 로그인, 로그아웃, 내 정보(me) : 세션 인증
-- [ ] 비밀번호 해시 저장(BCrypt/Favre 중 택 1) : BCrypt
+- [ ] 비밀번호 해시 저장(Spring Security : Crypto/Favre 중 택 1) : BCrypt
 - [ ] Schedule CRUD — 소유자만 수정/삭제, 목록 페이징(기본 10, 상한 50)
 - [ ] 목록에 commentCount 포함, 정렬 : updatedAt DESC(+ id DESC)
 - [ ] Comment CRUD — 작성/수정/삭제(소유자), 스케줄 기준 조회 ASC

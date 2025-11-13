@@ -4,6 +4,15 @@ spring:
     username: root
     password: pass
   jpa:
-    hibernate.ddl-auto: update
-    properties.hibernate.format_sql: true
-logging.level.org.hibernate.SQL: debug
+    hibernate:
+      ddl-auto: update     # 개발 중: update, 제출 전: validate 권장
+    properties:
+      hibernate:
+        format_sql: true
+        jdbc.time_zone: Asia/Seoul
+  jackson:
+    time-zone: Asia/Seoul
+
+logging:
+  level:
+    org.hibernate.SQL: debug

@@ -1,4 +1,4 @@
-package com.tr.schedule.common;
+package com.tr.schedule.domain;
 
 // @Column
 import jakarta.persistence.Column;
@@ -6,7 +6,8 @@ import jakarta.persistence.Column;
 import jakarta.persistence.EntityListeners;
 
 import jakarta.persistence.MappedSuperclass;
-import lombok.AccessLevel;
+
+
 import lombok.Getter;
 
 // createdAt
@@ -17,7 +18,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
 
-@Getter(AccessLevel.PROTECTED) // protected
+@Getter
 @MappedSuperclass
 @EntityListeners(AuditingEntityListener.class)
 public abstract class BaseTimeEntity { // 추상 클래스

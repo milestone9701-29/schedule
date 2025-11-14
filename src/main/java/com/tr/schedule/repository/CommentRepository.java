@@ -1,5 +1,6 @@
-package com.tr.schedule.comment;
+package com.tr.schedule.repository;
 
+import com.tr.schedule.domain.Comment;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;

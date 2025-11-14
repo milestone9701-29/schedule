@@ -1,5 +1,6 @@
-package com.tr.schedule.schedule;
+package com.tr.schedule.repository;
 
+import com.tr.schedule.domain.Schedule;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;

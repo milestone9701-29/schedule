@@ -1,7 +1,6 @@
-package com.tr.schedule.user;
+package com.tr.schedule.domain;
 
 // class -> class : extends
-import com.tr.schedule.common.BaseTimeEntity;
 
 // DB : Entity 생성, Table 생성. uniqueKey
 import jakarta.persistence.*;
@@ -20,15 +19,15 @@ import lombok.NoArgsConstructor;
 public class User extends BaseTimeEntity {
     @Id @GeneratedValue(strategy=GenerationType.IDENTITY)
     private Long id;
-    @Column(nullable=false, length=50)
+    @Column(nullable=false, length=30)
     private String username;
-    @Column(nullable=false, length=254) // 255-1
+    @Column(name="email", nullable=false, unique=true, length=100)
     private String email;
     @Column(name="password_hash", nullable=false, length=100)
     private String passwordHash;
 
     @Version
-    private Long Version;
+    private Long version;
 
     // 직접 작성 : username, email, pwHash
     public User(String username, String email, String passwordHash){

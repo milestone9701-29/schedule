@@ -1,7 +1,9 @@
-package com.tr.schedule.auth.service;
+package com.tr.schedule.service;
 
-import com.tr.schedule.user.User;
-import com.tr.schedule.user.UserRepository;
+import com.tr.schedule.dto.auth.LoginRequest;
+import com.tr.schedule.dto.auth.SignupRequest;
+import com.tr.schedule.domain.User;
+import com.tr.schedule.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;

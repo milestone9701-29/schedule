@@ -1,5 +1,6 @@
-package com.tr.schedule.user;
+package com.tr.schedule.repository;
 
+import com.tr.schedule.domain.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;

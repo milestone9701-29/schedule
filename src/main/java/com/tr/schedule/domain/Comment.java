@@ -1,9 +1,6 @@
-package com.tr.schedule.comment;
+package com.tr.schedule.domain;
 
 
-import com.tr.schedule.common.BaseTimeEntity;
-import com.tr.schedule.schedule.Schedule;
-import com.tr.schedule.user.User;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -14,7 +11,7 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor(access=AccessLevel.PROTECTED)
 @Entity
-@Table(name="comments", indexes={@Index(name="idx_conments_schedule_created", columnList="schedule_id, created_at")})
+@Table(name="comments", indexes={@Index(name="idx_comment_schedule_created", columnList="schedule_id, create_at")})
 public class Comment extends BaseTimeEntity {
     @Id @GeneratedValue(strategy= GenerationType.IDENTITY)
     private Long id;
@@ -22,7 +19,7 @@ public class Comment extends BaseTimeEntity {
     @JoinColumn(name="schedule_id", nullable=false)
     private Schedule schedule;
     @ManyToOne(fetch=FetchType.LAZY)
-    @JoinColumn(name="user_id", nullable=false)
+    @JoinColumn(name="author_id", nullable=false)
     private User author;
     @Column(nullable=false, length=100)
     private String content;

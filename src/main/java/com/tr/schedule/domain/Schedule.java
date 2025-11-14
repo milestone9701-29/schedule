@@ -1,8 +1,6 @@
-package com.tr.schedule.schedule;
+package com.tr.schedule.domain;
 
 // @Version : Entity 수정 시 필드 값 자동 증가. : cnt++와 같이 우선순위 잡는데 쓰는 모양.
-import com.tr.schedule.common.BaseTimeEntity;
-import com.tr.schedule.user.User;
 import jakarta.persistence.*;
 
 import lombok.AccessLevel;
@@ -15,14 +13,14 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED) // Proxy 생성 : protected Schedule() {}
 @Entity
-@Table(name="schedules", indexes={@Index(name="idx_schedules_user_updated", columnList="user_id, updated_at")})
+@Table(name="schedules", indexes={@Index(name="idx_schedule_owner_updated", columnList="owner_id, updated_at")})
 public class Schedule extends BaseTimeEntity {
     @Id @GeneratedValue(strategy=GenerationType.IDENTITY)
     private Long id;
     @ManyToOne(fetch=FetchType.LAZY, optional=false) // N
-    @JoinColumn(name="user_id", nullable=false)
+    @JoinColumn(name="owner_id", nullable=false)
     private User owner;
-    @Column(nullable=false, length=30)
+    @Column(nullable=false, length=50)
     private String title;
     @Column(nullable=false, length=200)
     private String content;

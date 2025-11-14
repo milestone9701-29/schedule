@@ -4,6 +4,7 @@ package com.tr.schedule.domain;
 import jakarta.persistence.*;
 
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 /* WHERE user_id=?ORDER BY updated_at DESC */
@@ -29,6 +30,7 @@ public class Schedule extends BaseTimeEntity {
     private Long version;
 
     // 직접 작성 : owner, title, content
+    @Builder
     public Schedule(User owner, String title, String content){
         this.owner = owner;
         this.title = title;

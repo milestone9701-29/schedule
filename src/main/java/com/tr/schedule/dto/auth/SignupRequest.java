@@ -10,7 +10,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 // 수정 필요
-// 가입 시 입력 요구 사항 : username, email, password
+// 가입 시 필요 입력 요구사항 : username, email, password
 @Getter
 @NoArgsConstructor(access=AccessLevel.PROTECTED) // JPA JSON -> parameter 비어있는 생성자 생성
 public class SignupRequest {

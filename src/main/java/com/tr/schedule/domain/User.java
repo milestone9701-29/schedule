@@ -5,16 +5,16 @@ package com.tr.schedule.domain;
 // DB : Entity 생성, Table 생성. uniqueKey
 import jakarta.persistence.*;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 // id, username, email, pwhash, version
-
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
 @Table(name="users",
-    uniqueConstraints=@UniqueConstraint(name="uk_users_email", columnNames="email"),
+    uniqueConstraints=@UniqueConstraint(name = "uk_users_email", columnNames="email"),
     indexes={@Index(name="idx_users_username", columnList="username")})
 public class User extends BaseTimeEntity {
     @Id @GeneratedValue(strategy=GenerationType.IDENTITY)
@@ -30,6 +30,7 @@ public class User extends BaseTimeEntity {
     private Long version;
 
     // 직접 작성 : username, email, pwHash
+    @Builder
     public User(String username, String email, String passwordHash){
         this.username=username;
         this.email=email;

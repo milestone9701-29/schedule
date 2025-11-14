@@ -10,7 +10,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 
-// 로그인 입력 요구 사항 : email, password.
+// 로그인 필요 입력 요구사항 : email, password.
 @Getter
 @NoArgsConstructor(access=AccessLevel.PROTECTED)
 public class LoginRequest {

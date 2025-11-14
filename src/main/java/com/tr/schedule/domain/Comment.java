@@ -3,10 +3,12 @@ package com.tr.schedule.domain;
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 // id content author
 // Schedule : owner(일정 소유자) Comment : author(작성자)
+
 
 @Getter
 @NoArgsConstructor(access=AccessLevel.PROTECTED)
@@ -28,6 +30,7 @@ public class Comment extends BaseTimeEntity {
     private Long version;
 
     // 직접 작성 : schedule, author, content
+    @Builder
     public Comment(Schedule schedule, User author, String content) {
         this.schedule = schedule;
         this.author = author;

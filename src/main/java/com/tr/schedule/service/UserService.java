@@ -1,5 +1,6 @@
 package com.tr.schedule.service;
 
+
 import com.tr.schedule.domain.User;
 import com.tr.schedule.dto.auth.AuthMapper;
 import com.tr.schedule.dto.auth.LoginRequest;
@@ -23,7 +24,7 @@ public class UserService {
     // POST
     @Transactional
     public User signUp(SignupRequest request){
-        if(userRepository.existsByEmail(request.getEmail())){ // 검사
+        if(checkingEmail(request)){ // 검사
             throw new IllegalArgumentException("Email already exists");
         }
         String encodedPassword=passwordEncoder.encode(request.getPassword());
@@ -36,12 +37,19 @@ public class UserService {
     // GET
     @Transactional(readOnly=true)
     public User login(LoginRequest request){
-        User user=userRepository.findByEmail(request.getEmail()) // 검사 + 대입
-            .orElseThrow(() -> new IllegalArgumentException("Invalid Email"));
-
+        User user=findLoginEmail(request);
         if(!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())){ // matches로 검증
             throw new IllegalArgumentException("Invalid Password");
         }
         return user;
+    }
+
+    // 정리용 헬퍼 메서드
+    private User findLoginEmail(LoginRequest request){
+        return userRepository.findByEmail(request.getEmail()) // 검사 + 대입
+            .orElseThrow(() -> new IllegalArgumentException("Invalid Email"));
+    }
+    private boolean checkingEmail(SignupRequest request){
+        return userRepository.existsByEmail(request.getEmail());
     }
 }

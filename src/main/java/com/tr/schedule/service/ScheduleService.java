@@ -33,56 +33,65 @@ public class ScheduleService {
 
     public ScheduleResponse createSchedule(Long userId, ScheduleCreateRequest request) {
         // 1). 변환.
-        User user = userRepository.findById(userId)
-            .orElseThrow(() -> new IllegalArgumentException("Cannot find userId : " + userId));
+        User user = getUserOrThrow(userId);
         // 2). dto : MapperClass 사용.
-        Schedule schedule = scheduleMapper.toEntity(user, request);
+        Schedule schedule = scheduleMapper.toScheduleEntity(user, request);
         // 3). 실제 저장
         Schedule saved = scheduleRepository.save(schedule);
         // 4). 반환
-        return scheduleMapper.toResponse(saved);
+        return scheduleMapper.toScheduleResponse(saved);
     }
 
     public ScheduleResponse updateSchedule(Long userId, Long scheduleId, ScheduleUpdateRequest request) {
-        // 1). userId -> user
-        User user = userRepository.findById(userId)
-            .orElseThrow(() -> new IllegalArgumentException("Cannot find userId : " + userId));
-        // 2). scheduleId -> owner
-        Schedule schedule = scheduleRepository.findById(scheduleId)
-            .orElseThrow(() -> new IllegalArgumentException("Cannot find scheduleId : " + scheduleId));
-        // 3). equals
-        if (!user.getId().equals(schedule.getOwner().getId())) {
-            throw new IllegalArgumentException("ID 불일치");
-        }
-        // 4). 실제 내용 수정
-        schedule.updateFrom(request);
-        // 5). 저장 : 트랜잭션을 쓰면 여기서 save 안 해도 됨(@Transactional),
-        Schedule saved = scheduleRepository.save(schedule);
-        // 5). 반환
-        return scheduleMapper.toResponse(saved);
-
-    }
-
-    public void deleteSchedule(Long userId, Long scheduleId) {
         // 1). 변환
-        User user = userRepository.findById(userId)
-            .orElseThrow(() -> new IllegalArgumentException("Cannot find userId : " + userId));
-        Schedule schedule = scheduleRepository.findById(scheduleId)
-            .orElseThrow(() -> new IllegalArgumentException("Cannot find scheduleId : " + scheduleId));
+        User user = getUserOrThrow(userId);
+        Schedule schedule = getScheduleOrThrow(scheduleId);
         // 2). equals
         if (!user.getId().equals(schedule.getOwner().getId())) {
             throw new IllegalArgumentException("ID 불일치");
         }
-        // 3). 실제 내용 : 삭제
-        scheduleRepository.deleteById(scheduleId);
+        // 3). 실제 내용 수정
+        schedule.scheduleUpdateFrom(request);
+        // 4). 저장 : 트랜잭션을 쓰면 여기서 save 안 해도 됨(@Transactional),
+        Schedule saved = scheduleRepository.save(schedule);
+        // 5). 반환
+        return scheduleMapper.toScheduleResponse(saved);
     }
 
-    public Page<ScheduleResponse> 명칭어떻게하지(Long userId, Pageable pageable) {
+    public void deleteSchedule(Long userId, Long scheduleId) {
         // 1). 변환
-        Schedule schedule = scheduleRepository.findById(userId)
-            .orElseThrow(() -> new IllegalArgumentException("Cannot find userId : " + userId));
+        User user = getUserOrThrow(userId);
+        Schedule schedule = getScheduleOrThrow(scheduleId);
+        // 2). equals : 정리 예정
+        if (!user.getId().equals(schedule.getOwner().getId())) {
+            throw new IllegalArgumentException("ID 불일치");
+        }
+        // 3). 실제 내용 : 삭제
+        scheduleRepository.delete(schedule);
+    }
+
+    public Page<ScheduleResponse> listUserSchedules(Long userId, Pageable pageable) {
+        // 1). 변환 : owner
+        User owner = getUserOrThrow(userId);
         // 2). 실제 내용.
-        return userRepository.findAllByUserIdOrderByUpdatedAtDesc(user, pageable);
-        //
+        Page<Schedule> page = scheduleRepository.findAllByOwnerOrderByUpdatedAtDesc(owner, pageable);
+        // 3). 반환.
+       return page.map(scheduleMapper::toScheduleResponse);
+    } // if문은 책임, 가독성을 위해 제외.
+
+    public Page<ScheduleResponse> listSchedules(Pageable pageable){
+        Page<Schedule> page = scheduleRepository.findAllByOrderByUpdatedAtDesc(pageable);
+        return page.map(scheduleMapper::toScheduleResponse);
+    }
+
+
+    // 정리용 헬퍼 메서드.
+    private User getUserOrThrow(Long userId){
+        return userRepository.findById(userId)
+            .orElseThrow(() -> new IllegalArgumentException("Cannot find userId : " + userId));
+    }
+    private Schedule getScheduleOrThrow(Long scheduleId){
+        return scheduleRepository.findById(scheduleId)
+            .orElseThrow(() -> new IllegalArgumentException("Cannot find scheduleId : " + scheduleId));
     }
 }

@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 // 회원 가입, 로그인 : POST
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api")
+@RequestMapping("/api/auth")
 public class AuthController{
 
     private final UserService userService;

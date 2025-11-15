@@ -1,7 +1,6 @@
 package com.tr.schedule.dto.comment;
 
-import com.tr.schedule.domain.Comment;
-import com.tr.schedule.domain.User;
+
 import lombok.Value;
 
 import java.time.LocalDateTime;
@@ -11,7 +10,8 @@ import java.time.LocalDateTime;
 @Value
 public class CommentResponse {
     Long id;
-    User author;
+    Long authorId;
+    String authorName;
     String content;
     LocalDateTime createdAt;
     LocalDateTime updatedAt;

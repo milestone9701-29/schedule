@@ -1,7 +1,6 @@
 package com.tr.schedule.dto.schedule;
 
 
-import com.tr.schedule.domain.User;
 import lombok.Value;
 
 import java.time.LocalDateTime;
@@ -10,7 +9,8 @@ import java.time.LocalDateTime;
 @Value
 public class ScheduleResponse {
     Long id;
-    User owner;
+    Long ownerId;
+    String ownerName;
     String title;
     String content;
     LocalDateTime createdAt;

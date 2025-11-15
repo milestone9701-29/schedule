@@ -1,6 +1,7 @@
 package com.tr.schedule.domain;
 
 
+import com.tr.schedule.dto.comment.CommentUpdateRequest;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -31,9 +32,12 @@ public class Comment extends BaseTimeEntity {
 
     // 직접 작성 : schedule, author, content
     @Builder
-    public Comment(Schedule schedule, User author, String content) {
-        this.schedule = schedule;
+    public Comment(User author, Schedule schedule, String content) {
         this.author = author;
+        this.schedule = schedule;
         this.content = content;
+    }
+    public void commentUpdateFrom(CommentUpdateRequest request){
+        this.content = request.getContent();
     }
 }

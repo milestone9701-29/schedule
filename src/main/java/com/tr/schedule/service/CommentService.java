@@ -1,6 +1,8 @@
 package com.tr.schedule.service;
 
 
+import com.tr.schedule.common.exception.AccessDeniedException;
+import com.tr.schedule.common.exception.ResourceNotFoundException;
 import com.tr.schedule.domain.Comment;
 import com.tr.schedule.domain.Schedule;
 import com.tr.schedule.domain.User;
@@ -46,7 +48,7 @@ public class CommentService {
         User user=getUserOrThrow(userId);
         Comment comment=getCommentOrThrow(commentId);
         // 2). equals
-        if (!user.getId().equals(comment.getAuthor().getId())) { throw new IllegalArgumentException("ID 불일치"); }
+        validateEachOther(user, comment);
         // 3). 실제 갱신
         comment.commentUpdateFrom(request);
         // 4). 저장.
@@ -59,7 +61,7 @@ public class CommentService {
         User user=getUserOrThrow(userId);
         Comment comment=getCommentOrThrow(commentId);
         // 2). equals
-        if (!user.getId().equals(comment.getAuthor().getId())) { throw new IllegalArgumentException("ID 불일치"); }
+        validateEachOther(user, comment);
         // 3). 삭제
         commentRepository.delete(comment);
     }
@@ -71,14 +73,17 @@ public class CommentService {
     // 정리용 헬퍼 메서드
     private User getUserOrThrow(Long userId){
         return userRepository.findById(userId)
-            .orElseThrow(() -> new IllegalArgumentException("Cannot find userId : " + userId));
+            .orElseThrow(() -> new ResourceNotFoundException("Cannot find userId : " + userId));
     }
     private Schedule getScheduleOrThrow(Long scheduleId){
         return scheduleRepository.findById(scheduleId)
-            .orElseThrow(() -> new IllegalArgumentException("Cannot find scheduleId : " + scheduleId));
+            .orElseThrow(() -> new ResourceNotFoundException("Cannot find scheduleId : " + scheduleId));
     }
     private Comment getCommentOrThrow(Long commentId){
         return commentRepository.findById(commentId)
-            .orElseThrow(() -> new IllegalArgumentException("Cannot find commentId : " + commentId));
+            .orElseThrow(() -> new ResourceNotFoundException("Cannot find commentId : " + commentId));
     }
+    private void validateEachOther(User user, Comment comment){
+        if (!user.getId().equals(comment.getAuthor().getId())) { throw new AccessDeniedException("ID 불일치"); }
+        }
 }

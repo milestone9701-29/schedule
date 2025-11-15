@@ -1,6 +1,8 @@
 package com.tr.schedule.service;
 
 
+import com.tr.schedule.common.exception.AccessDeniedException;
+import com.tr.schedule.common.exception.ResourceNotFoundException;
 import com.tr.schedule.domain.Schedule;
 import com.tr.schedule.domain.User;
 import com.tr.schedule.dto.schedule.ScheduleCreateRequest;
@@ -47,9 +49,7 @@ public class ScheduleService {
         User user = getUserOrThrow(userId);
         Schedule schedule = getScheduleOrThrow(scheduleId);
         // 2). equals
-        if (!user.getId().equals(schedule.getOwner().getId())) {
-            throw new IllegalArgumentException("ID 불일치");
-        }
+        validateEachOther(user, schedule);
         // 3). 실제 내용 수정
         schedule.scheduleUpdateFrom(request);
         // 4). 저장 : 트랜잭션을 쓰면 여기서 save 안 해도 됨(@Transactional),
@@ -63,9 +63,7 @@ public class ScheduleService {
         User user = getUserOrThrow(userId);
         Schedule schedule = getScheduleOrThrow(scheduleId);
         // 2). equals : 정리 예정
-        if (!user.getId().equals(schedule.getOwner().getId())) {
-            throw new IllegalArgumentException("ID 불일치");
-        }
+        validateEachOther(user, schedule);
         // 3). 실제 내용 : 삭제
         scheduleRepository.delete(schedule);
     }
@@ -88,10 +86,15 @@ public class ScheduleService {
     // 정리용 헬퍼 메서드.
     private User getUserOrThrow(Long userId){
         return userRepository.findById(userId)
-            .orElseThrow(() -> new IllegalArgumentException("Cannot find userId : " + userId));
+            .orElseThrow(() -> new ResourceNotFoundException("Cannot find userId : " + userId));
     }
     private Schedule getScheduleOrThrow(Long scheduleId){
         return scheduleRepository.findById(scheduleId)
-            .orElseThrow(() -> new IllegalArgumentException("Cannot find scheduleId : " + scheduleId));
+            .orElseThrow(() -> new ResourceNotFoundException("Cannot find scheduleId : " + scheduleId));
+    }
+    private void validateEachOther(User user, Schedule schedule){
+        if (!user.getId().equals(schedule.getOwner().getId())) {
+            throw new AccessDeniedException("ID 불일치");
+        }
     }
 }

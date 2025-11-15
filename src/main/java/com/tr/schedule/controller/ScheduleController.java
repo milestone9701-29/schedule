@@ -14,7 +14,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-
 // @AuthenticationPrincipal
 // 필요 기능 : 일정 생성, 일정 수정, 일정 삭제, 단건, List 조회 : 기준은 userId 일치로.
 @RestController
@@ -22,6 +21,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api")
 public class ScheduleController {
     private final ScheduleService scheduleService;
+
 
     @PostMapping("/users/{userId}")
     public ResponseEntity<ScheduleResponse> createSchedule(@PathVariable Long userId, @Valid @RequestBody ScheduleCreateRequest request){

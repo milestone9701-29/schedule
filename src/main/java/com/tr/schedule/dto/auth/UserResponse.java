@@ -1,6 +1,5 @@
 package com.tr.schedule.dto.auth;
 
-import com.tr.schedule.domain.User;
 
 import lombok.Value;
 

@@ -1,12 +1,15 @@
 package com.tr.schedule.domain;
 
 // @Version : Entity 수정 시 필드 값 자동 증가. : cnt++와 같이 우선순위 잡는데 쓰는 모양.
+import com.tr.schedule.dto.schedule.ScheduleUpdateRequest;
 import jakarta.persistence.*;
 
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+
+import java.util.Objects;
 /* WHERE user_id=?ORDER BY updated_at DESC */
 // id title content owner(User) version
 // Schedule : owner(일정 소유자) Comment : author(작성자)
@@ -35,5 +38,9 @@ public class Schedule extends BaseTimeEntity {
         this.owner = owner;
         this.title = title;
         this.content = content;
+    }
+    public void updateFrom(ScheduleUpdateRequest request){
+        this.title = request.getTitle();
+        this.content = request.getContent();
     }
 }

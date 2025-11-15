@@ -4,7 +4,7 @@ import com.tr.schedule.domain.User;
 
 import org.springframework.stereotype.Component;
 
-
+// 25-11-16 : 이거 건드린게 오늘 제일 잘한 일인 듯? Mapper Class
 @Component
 public class AuthMapper{
 

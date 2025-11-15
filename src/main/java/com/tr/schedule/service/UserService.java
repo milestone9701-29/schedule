@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 // 필요 기능 : 회원 가입, 로그인
 @Service
@@ -19,6 +20,8 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     private final AuthMapper authMapper;
 
+    // POST
+    @Transactional
     public User signUp(SignupRequest request){
         if(userRepository.existsByEmail(request.getEmail())){ // 검사
             throw new IllegalArgumentException("Email already exists");
@@ -29,6 +32,9 @@ public class UserService {
 
         return userRepository.save(user);
     }
+
+    // GET
+    @Transactional(readOnly=true)
     public User login(LoginRequest request){
         User user=userRepository.findByEmail(request.getEmail()) // 검사 + 대입
             .orElseThrow(() -> new IllegalArgumentException("Invalid Email"));

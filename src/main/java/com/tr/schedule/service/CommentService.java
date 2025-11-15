@@ -2,7 +2,11 @@ package com.tr.schedule.service;
 
 
 import com.tr.schedule.domain.Comment;
+import com.tr.schedule.domain.User;
 import com.tr.schedule.dto.comment.CommentCreateRequest;
+import com.tr.schedule.dto.comment.CommentResponse;
+import com.tr.schedule.repository.CommentRepository;
+import com.tr.schedule.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -14,7 +18,15 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class CommentService {
 
-    public Comment create(Long scheduleId, Long userId, CommentCreateRequest request){}
+    private final CommentRepository commentRepository;
+    private final UserRepository userRepository;
+
+    public CommentResponse createComment(Long userId, Long scheduleId, CommentCreateRequest request){
+        // 1). 변환
+        User user=userRepository.findById(userId)
+            .orElseThrow(() -> new IllegalArgumentException("Cannot find userId : " + userId));
+    }
     public Comment update(Long commentId, Long userId) {}
     public Comment delete(Long commentId, Long userId) {}
+    public Comment getAuthorOrElse(Long)
 }

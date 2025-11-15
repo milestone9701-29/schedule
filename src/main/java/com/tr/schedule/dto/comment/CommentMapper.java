@@ -2,7 +2,6 @@ package com.tr.schedule.dto.comment;
 
 import com.tr.schedule.domain.Comment;
 import com.tr.schedule.domain.User;
-import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Component;
 
 

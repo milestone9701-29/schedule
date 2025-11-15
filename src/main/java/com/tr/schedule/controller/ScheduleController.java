@@ -9,6 +9,10 @@ import com.tr.schedule.dto.schedule.ScheduleUpdateRequest;
 import com.tr.schedule.service.ScheduleService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -26,17 +30,26 @@ import org.springframework.web.bind.annotation.RestController;
 public class ScheduleController {
 
     private final ScheduleService scheduleService;
-    private final ScheduleMapper scheduleMapper;
 
-    public ResponseEntity<ScheduleResponse> createSchedule(@PathVariable Long ownerId, @Valid @RequestBody ScheduleCreateRequest request){
-        Schedule saved=scheduleService.createSchedule(ownerId, request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(scheduleMapper.toResponse(saved));
+    public ResponseEntity<ScheduleResponse> createSchedule(@PathVariable Long userId, @Valid @RequestBody ScheduleCreateRequest request){
+        ScheduleResponse response=scheduleService.createSchedule(userId, request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    public ResponseEntity<ScheduleResponse> updateSchedule(@PathVariable Long scheduleId, @PathVariable Long ownerId,
+    public ResponseEntity<ScheduleResponse> updateSchedule(@PathVariable Long userId, @PathVariable Long scheduleId,
                                                            @Valid @RequestBody ScheduleUpdateRequest request){
-        Schedule Saved=
+        ScheduleResponse response=scheduleService.updateSchedule(userId, scheduleId, request);
+        return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
-    public ResponseEntity<ScheduleResponse> deleteSchedule(@PathVariable Long scheduleId, @Valid @RequestBody)
+    public ResponseEntity<Void> deleteSchedule(@PathVariable Long userId, @PathVariable Long scheduleId){
+        scheduleService.deleteSchedule(userId, scheduleId);
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+        // return ResponseEntity.status(HttpStatus.NO_CONTENT).body(null);
+    }
+
+    public ResponseEntity<Page<ScheduleResponse>> listUserSchedules(@PathVariable Long userId,
+                                                          @PageableDefault(size=10, sort={"updatedAt"}, direction= Sort.Direction.DESC) Pageable pageable){
+        return ResponseEntity.status(HttpStatus.OK).body(scheduleService.명칭어떻게하지(userId, pageable).map(ScheduleMapper::toResponse));
+    }
 }

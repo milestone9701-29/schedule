@@ -14,15 +14,4 @@ public class UserResponse {
     String username;
     String email;
     LocalDateTime createdAt;
-
-
-    // 정적 팩토리 메서드
-    public static UserResponse from(User user) {
-        return new UserResponse(
-            user.getId(),
-            user.getUsername(),
-            user.getEmail(),
-            user.getCreatedAt()
-        );
-    }
 }

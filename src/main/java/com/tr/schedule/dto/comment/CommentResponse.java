@@ -15,15 +15,4 @@ public class CommentResponse {
     String content;
     LocalDateTime createdAt;
     LocalDateTime updatedAt;
-
-    // 정적 팩토리 메서드
-    public static CommentResponse from(Comment c){
-        return new CommentResponse(
-            c.getId(),
-            c.getAuthor(),
-            c.getContent(),
-            c.getCreatedAt(),
-            c.getUpdatedAt()
-        );
-    }
 }

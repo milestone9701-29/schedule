@@ -30,7 +30,7 @@ public class AuthController{
         return ResponseEntity.status(HttpStatus.CREATED).body(authMapper.toUserResponse(saved));
     }
 
-    @GetMapping("/login") // 일치 여부 체크만 하면 되니까 Get이지.
+    @PostMapping("/login") // 일치 여부 체크만 하면 되니까 Get이지.
     public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request){
         User user=userService.login(request);
         CustomUserDetails userDetails=new CustomUserDetails(user);

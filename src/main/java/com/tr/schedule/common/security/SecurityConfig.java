@@ -10,31 +10,36 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
+
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
-    private final JwtAuthenticationFilter jwtAuthenticationFilter;
+
+    private final JwtTokenProvider jwtTokenProvider;
     private final CustomUserDetailsService customUserDetailsService;
 
     @Bean
-    public SecurityFilterChain springSecurityFilterChain(HttpSecurity http) throws Exception{
-        http.csrf(csrf->csrf.disable())
-            .sessionManagement(sm->sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .authorizeHttpRequests(auth->auth
-                .requestMatchers(
-                    "/api/auth/**",
-                    "/h2-console/**" // jdbc:mysql://localhost:3306/schedule_db?useSSL=false&serverTimezone=Asia/Seoul : 나 mysql 씀.
-                ).permitAll()
+    public JwtAuthenticationFilter jwtAuthenticationFilter() {
+        return new JwtAuthenticationFilter(jwtTokenProvider, customUserDetailsService);
+    }
+
+    @Bean
+    public SecurityFilterChain springSecurityFilterChain(
+        HttpSecurity http,
+        JwtAuthenticationFilter jwtAuthenticationFilter
+    ) throws Exception {
+        http
+            .csrf(csrf -> csrf.disable())
+            .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .authorizeHttpRequests(auth -> auth
+                .requestMatchers("/api/auth/**").permitAll()
                 .anyRequest().authenticated()
             )
-            .userDetailsService(customUserDetailsService);
-        // h2 콘솔 : frameOptions 무시
-        http.headers(headers->headers.frameOptions(frame->frame.sameOrigin()));
-        // JWT filter : UsernamePasswordAuthenticationFilter 전에 끼워넣기
-        http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+
         return http.build();
     }
-    // passwordConfig에 pw encoder 있으니 생략.
-    // "/api/auth/**", "/h2-console/**" : Authorization Bearer <token> 없을 경우, 401, 403
 }
+// passwordConfig에 pw encoder 있으니 생략.
+// "/api/auth/**", "/h2-console/**" : Authorization Bearer <token> 없을 경우, 401, 403

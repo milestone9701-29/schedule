@@ -1,7 +1,8 @@
 package com.tr.schedule.common.security;
 
+import com.tr.schedule.domain.User;
 import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.userdetails.
+import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
 import java.util.Collections;

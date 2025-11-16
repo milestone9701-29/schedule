@@ -14,12 +14,14 @@ public class CustomUserDetailsService implements UserDetailsService {
 
     private final UserRepository userRepository;
 
+    //로그인 -> 이메일로 조회
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException{
         User user = userRepository.findByEmail(email)
             .orElseThrow(() -> new UsernameNotFoundException("Cannot find userId : " + email ));
         return new CustomUserDetails(user);
     }
+    // JWT 안의 id로 조회하는 헬퍼.
     public UserDetails loadUserById(Long id) {
         User user = userRepository.findById(id)
             .orElseThrow(()-> new UsernameNotFoundException("Cannot find userId :  " + id));

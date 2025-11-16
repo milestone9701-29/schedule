@@ -3,14 +3,16 @@ package com.tr.schedule.common.security;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
+
 import io.jsonwebtoken.security.Keys;
-import lombok.Value;
+
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.nio.charset.StandardCharsets;
-import java.security.Key;
-import java.security.Signature;
+
+import javax.crypto.SecretKey;
+
 import java.util.Date;
 
 @Component
@@ -18,23 +20,23 @@ public class JwtTokenProvider {
     @Value("${jwt.secret}")
     private String secretKey;
     // 1시간
-    private final long ACCESS_TOKEN_VALIDITY_MS = 60*60*1000L; // 1ms 0.001초
+    private final long ACCESS_TOKEN_VALIDITY_MS = 60*60*1000L; // 1ms 0.001초 : 분리 필요.
     // token 생성
     public String generateToken(CustomUserDetails userDetails){
         Date now=new Date();
         Date expiry=new Date(now.getTime()+ACCESS_TOKEN_VALIDITY_MS);
 
-        return Jwts.builder()
-            .setSubject(userDetails.getId().toString()) //지원중단?
+        return Jwts.builder() // set
+            .subject(userDetails.getId().toString()) // set
             .claim("email", userDetails.getUsername())
-            .setIssuedAt(now) // 지원중단ㅋㅋ
-            .setExpiration(expiry)
-            .signWith(getSigningKey(), SignatureAlgorithm.HS256) // 지원중단ㅋㅋㅋㅋㅋ
+            .issuedAt(now) // set
+            .expiration(expiry) // set
+            .signWith(getSigningKey()) // Key에서 알고리즘 유추 : 구버전은 따로 설정해줘야 함.
             .compact();
     }
-    private Key getSigningKey(){
+    private SecretKey getSigningKey(){
         byte[] keyBytes=secretKey.getBytes(StandardCharsets.UTF_8); // kor
-        return Keys.hmacShaKeyFor(keyBytes);
+        return Keys.hmacShaKeyFor(keyBytes); // HS256 : 32자 이상 : Hash Based Message Authentication Code
     }
 
     // token에서 userId 추출
@@ -51,11 +53,11 @@ public class JwtTokenProvider {
         }
     }
     public Claims parseClaims(String token){
-        return Jwts.parserBuilder()
-            .setSigningKey(getSigningKey())
+        return Jwts.parser()
+            .verifyWith(getSigningKey())
             .build()
-            .parseClaimsJws(token)
-            .getBody();
+            .parseSignedClaims(token)
+            .getPayload();
     }
 
 }

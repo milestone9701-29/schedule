@@ -1,7 +1,7 @@
 package com.tr.schedule.service;
 
 
-import com.tr.schedule.common.exception.AccessDeniedException;
+import com.tr.schedule.common.exception.BusinessAccessDeniedException;
 import com.tr.schedule.common.exception.ResourceNotFoundException;
 import com.tr.schedule.domain.Schedule;
 import com.tr.schedule.domain.User;
@@ -94,7 +94,7 @@ public class ScheduleService {
     }
     private void validateEachOther(User user, Schedule schedule){
         if (!user.getId().equals(schedule.getOwner().getId())) {
-            throw new AccessDeniedException("ID 불일치");
+            throw new BusinessAccessDeniedException("ID 불일치");
         }
     }
 }

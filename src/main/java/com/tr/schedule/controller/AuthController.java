@@ -1,19 +1,17 @@
 package com.tr.schedule.controller;
 
 
+import com.tr.schedule.common.security.CustomUserDetails;
+// import com.tr.schedule.common.security.JwtAuthenticationFilter;
+import com.tr.schedule.common.security.JwtTokenProvider;
 import com.tr.schedule.domain.User;
-import com.tr.schedule.dto.auth.AuthMapper;
-import com.tr.schedule.dto.auth.LoginRequest;
-import com.tr.schedule.dto.auth.SignupRequest;
-import com.tr.schedule.dto.auth.UserResponse;
+import com.tr.schedule.dto.auth.*;
 import com.tr.schedule.service.UserService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 
 // 회원 가입, 로그인 : POST
@@ -24,16 +22,22 @@ public class AuthController{
 
     private final UserService userService;
     private final AuthMapper authMapper;
+    private final JwtTokenProvider jwtTokenProvider;
 
-    @PostMapping
-    public ResponseEntity<UserResponse> signUp(SignupRequest request){
-        User saved=userService.signUp(request); // 정리
-        return ResponseEntity.status(HttpStatus.CREATED).body(authMapper.toResponse(saved));
+    @PostMapping("/signup")
+    public ResponseEntity<UserResponse> signUp(@Valid @RequestBody SignupRequest request){
+        User saved=userService.signUp(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(authMapper.toUserResponse(saved));
     }
 
-    @GetMapping // 일치 여부 체크만 하면 되니까 Get이지.
-    public ResponseEntity<UserResponse> login(LoginRequest request){
-        User saved=userService.login(request); // 정리
-        return ResponseEntity.status(HttpStatus.OK).body(authMapper.toResponse(saved));
+    @GetMapping("/login") // 일치 여부 체크만 하면 되니까 Get이지.
+    public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request){
+        User user=userService.login(request);
+        CustomUserDetails userDetails=new CustomUserDetails(user);
+        String token=jwtTokenProvider.generateToken(userDetails);
+        UserResponse userResponse=authMapper.toUserResponse(user);
+        return ResponseEntity.ok(new AuthResponse(token, userResponse));
+
+        // return ResponseEntity.status(HttpStatus.OK).body(new AuthResponse(token, userResponse));
     }
 }

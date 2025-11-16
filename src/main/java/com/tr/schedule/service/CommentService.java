@@ -1,7 +1,7 @@
 package com.tr.schedule.service;
 
 
-import com.tr.schedule.common.exception.AccessDeniedException;
+import com.tr.schedule.common.exception.BusinessAccessDeniedException;
 import com.tr.schedule.common.exception.ResourceNotFoundException;
 import com.tr.schedule.domain.Comment;
 import com.tr.schedule.domain.Schedule;
@@ -84,6 +84,6 @@ public class CommentService {
             .orElseThrow(() -> new ResourceNotFoundException("Cannot find commentId : " + commentId));
     }
     private void validateEachOther(User user, Comment comment){
-        if (!user.getId().equals(comment.getAuthor().getId())) { throw new AccessDeniedException("ID 불일치"); }
+        if (!user.getId().equals(comment.getAuthor().getId())) { throw new BusinessAccessDeniedException("ID 불일치"); }
         }
 }

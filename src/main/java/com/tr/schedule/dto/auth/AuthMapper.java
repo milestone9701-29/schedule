@@ -16,7 +16,7 @@ public class AuthMapper{
             .build();
     }
 
-    public UserResponse toResponse(User user){ // 출력 값
+    public UserResponse toUserResponse(User user){ // 출력 값
         return new UserResponse(
             user.getId(),
             user.getUsername(),

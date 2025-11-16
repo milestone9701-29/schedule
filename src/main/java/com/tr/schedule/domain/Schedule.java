@@ -9,7 +9,6 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.util.Objects;
 /* WHERE user_id=?ORDER BY updated_at DESC */
 // id title content owner(User) version
 // Schedule : owner(일정 소유자) Comment : author(작성자)

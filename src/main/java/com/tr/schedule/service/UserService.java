@@ -1,6 +1,7 @@
 package com.tr.schedule.service;
 
 
+import com.tr.schedule.common.exception.ResourceNotFoundException;
 import com.tr.schedule.domain.User;
 import com.tr.schedule.dto.auth.AuthMapper;
 import com.tr.schedule.dto.auth.LoginRequest;
@@ -47,7 +48,7 @@ public class UserService {
     // 정리용 헬퍼 메서드
     private User findLoginEmail(LoginRequest request){
         return userRepository.findByEmail(request.getEmail()) // 검사 + 대입
-            .orElseThrow(() -> new IllegalArgumentException("Invalid Email"));
+            .orElseThrow(() -> new ResourceNotFoundException("Invalid Email"));
     }
     private boolean checkingEmail(SignupRequest request){
         return userRepository.existsByEmail(request.getEmail());

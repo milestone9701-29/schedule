@@ -1,5 +1,6 @@
 package com.tr.schedule.controller;
 
+import com.tr.schedule.common.security.CustomUserDetails;
 import com.tr.schedule.dto.schedule.ScheduleCreateRequest;
 import com.tr.schedule.dto.schedule.ScheduleResponse;
 import com.tr.schedule.dto.schedule.ScheduleUpdateRequest;
@@ -12,6 +13,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 // @AuthenticationPrincipal
@@ -43,10 +45,10 @@ public class ScheduleController {
         // return ResponseEntity.status(HttpStatus.NO_CONTENT).body(null);
     }
 
-    @GetMapping("users/{userId}")
-    public ResponseEntity<Page<ScheduleResponse>> listUserSchedules(@PathVariable Long userId,
+    @GetMapping("/me/schedules")
+    public ResponseEntity<Page<ScheduleResponse>> listUserSchedules(@AuthenticationPrincipal CustomUserDetails currentUser,
                                                           @PageableDefault(size=10, sort={"updatedAt"}, direction= Sort.Direction.DESC) Pageable pageable){
-        return ResponseEntity.status(HttpStatus.OK).body(scheduleService.listUserSchedules(userId, pageable));
+        return ResponseEntity.status(HttpStatus.OK).body(scheduleService.listUserSchedules(currentUser.getId(), pageable));
     }
 
     @GetMapping

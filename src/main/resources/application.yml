@@ -12,7 +12,8 @@ spring:
         jdbc.time_zone: Asia/Seoul
   jackson:
     time-zone: Asia/Seoul
-
+jwt:
+  secret: "randoms3cretkey_example_aaaaaah1201931randoms3cretkey_example_aaaaaah1201931"
 logging:
   level:
     org.hibernate.SQL: debug

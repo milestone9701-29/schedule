@@ -9,7 +9,6 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import javax.management.relation.Role;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -37,6 +36,8 @@ public class User extends BaseTimeEntity {
         name="user_roles",
         joinColumns=@JoinColumn(name="user_id")
     )
+    @Enumerated(EnumType.STRING)
+    @Column(name="role",nullable=false,length=20)
     private Set<Role> roles=new HashSet<>();
 
     @Version

@@ -6,7 +6,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
-import java.util.Collections;
+
 
 public class CustomUserDetails implements UserDetails{
     private final Long id;
@@ -20,7 +20,9 @@ public class CustomUserDetails implements UserDetails{
         this.email=user.getEmail();
         this.username=user.getUsername();
         this.password=user.getPasswordHash();
-        this.authorities()=user.getRoles().stream().map(role->new SimpleGrantedAuthority("ROLE_"+role.name())).toList;
+        this.authorities = user.getRoles().stream()
+            .map(role -> new SimpleGrantedAuthority("ROLE_" + role.name()))
+            .toList();
     }
     public Long getId(){
         return id;

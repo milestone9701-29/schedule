@@ -2,6 +2,7 @@ package com.tr.schedule.service;
 
 
 import com.tr.schedule.common.exception.ResourceNotFoundException;
+import com.tr.schedule.domain.Role;
 import com.tr.schedule.domain.User;
 import com.tr.schedule.dto.auth.AuthMapper;
 import com.tr.schedule.dto.auth.LoginRequest;
@@ -13,7 +14,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.management.relation.Role;
+
 
 
 // 필요 기능 : 회원 가입, 로그인
@@ -35,7 +36,7 @@ public class UserService {
 
         User user = authMapper.ofSignUp(encodedPassword, request);
 
-        user.addRole(Role.USER);
+        user.addRole(Role.USER); // 가입 시 권한 부여
         return userRepository.save(user);
     }
 

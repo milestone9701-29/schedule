@@ -7,6 +7,7 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Component;
 
 import java.nio.charset.StandardCharsets;
@@ -14,6 +15,8 @@ import java.nio.charset.StandardCharsets;
 import javax.crypto.SecretKey;
 
 import java.util.Date;
+
+import java.util.List;
 
 @Component
 public class JwtTokenProvider {
@@ -26,9 +29,12 @@ public class JwtTokenProvider {
         Date now=new Date();
         Date expiry=new Date(now.getTime()+ACCESS_TOKEN_VALIDITY_MS);
 
+        List<String> roles=userDetails.getAuthorities().stream().map(GrantedAuthority::getAuthority).toList(); // ROLE_USER
+
         return Jwts.builder() // set
             .subject(userDetails.getId().toString()) // set
-            .claim("email", userDetails.getUsername())
+            .claim("email", userDetails.getUsername()) // 클레임.
+            .claim("roles", roles)
             .issuedAt(now) // set
             .expiration(expiry) // set
             .signWith(getSigningKey()) // Key에서 알고리즘 유추 : 구버전은 따로 설정해줘야 함.

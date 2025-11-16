@@ -13,6 +13,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.management.relation.Role;
+
+
 // 필요 기능 : 회원 가입, 로그인
 @Service
 @RequiredArgsConstructor
@@ -32,11 +35,12 @@ public class UserService {
 
         User user = authMapper.ofSignUp(encodedPassword, request);
 
+        user.addRole(Role.USER);
         return userRepository.save(user);
     }
 
-    // GET
-    @Transactional(readOnly=true)
+    // POST
+    @Transactional
     public User login(LoginRequest request){
         User user=findLoginEmail(request);
         if(!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())){ // matches로 검증

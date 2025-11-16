@@ -9,6 +9,11 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import javax.management.relation.Role;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
+
 // id, username, email, pwhash, version
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -26,6 +31,14 @@ public class User extends BaseTimeEntity {
     @Column(name="password_hash", nullable=false, length=100)
     private String passwordHash;
 
+    // roles : 권한 부여
+    @ElementCollection(fetch=FetchType.EAGER)
+    @CollectionTable(
+        name="user_roles",
+        joinColumns=@JoinColumn(name="user_id")
+    )
+    private Set<Role> roles=new HashSet<>();
+
     @Version
     private Long version;
 
@@ -35,5 +48,13 @@ public class User extends BaseTimeEntity {
         this.username=username;
         this.email=email;
         this.passwordHash=passwordHash;
+    }
+
+    // 추가 : 편의용
+    public void addRole(Role role){
+        roles.add(role);
+    }
+    public Set<Role> getRoles(){ // 불변 Set
+        return Collections.unmodifiableSet(roles);
     }
 }

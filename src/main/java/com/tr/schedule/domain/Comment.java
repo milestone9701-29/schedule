@@ -37,7 +37,7 @@ public class Comment extends BaseTimeEntity {
         this.schedule = schedule;
         this.content = content;
     }
-    public void commentUpdateFrom(CommentUpdateRequest request){
-        this.content = request.getContent();
+    public void commentUpdate(String content){
+        this.content = content;
     }
 }

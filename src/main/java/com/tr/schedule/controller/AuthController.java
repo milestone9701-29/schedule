@@ -6,7 +6,7 @@ import com.tr.schedule.common.security.CustomUserDetails;
 import com.tr.schedule.common.security.JwtTokenProvider;
 import com.tr.schedule.domain.User;
 import com.tr.schedule.dto.auth.*;
-import com.tr.schedule.service.UserService;
+import com.tr.schedule.service.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -20,19 +20,19 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/auth")
 public class AuthController{
 
-    private final UserService userService;
+    private final AuthService authService;
     private final AuthMapper authMapper;
     private final JwtTokenProvider jwtTokenProvider;
 
     @PostMapping("/signup")
     public ResponseEntity<UserResponse> signUp(@Valid @RequestBody SignupRequest request){
-        User saved=userService.signUp(request);
+        User saved=authService.signUp(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(authMapper.toUserResponse(saved));
     }
 
-    @PostMapping("/login") // 일치 여부 체크만 하면 되니까 Get이지.
+    @PostMapping("/login") // token
     public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request){
-        User user=userService.login(request);
+        User user=authService.login(request);
         CustomUserDetails userDetails=new CustomUserDetails(user);
         String token=jwtTokenProvider.generateToken(userDetails);
         UserResponse userResponse=authMapper.toUserResponse(user);

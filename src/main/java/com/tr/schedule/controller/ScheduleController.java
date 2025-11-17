@@ -20,32 +20,32 @@ import org.springframework.web.bind.annotation.*;
 // 필요 기능 : 일정 생성, 일정 수정, 일정 삭제, 단건, List 조회 : 기준은 userId 일치로.
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api")
+@RequestMapping("/api/schedules")
 public class ScheduleController {
     private final ScheduleService scheduleService;
 
 
-    @PostMapping("/users/{userId}")
-    public ResponseEntity<ScheduleResponse> createSchedule(@PathVariable Long userId, @Valid @RequestBody ScheduleCreateRequest request){
-        ScheduleResponse response=scheduleService.createSchedule(userId, request);
+    @PostMapping
+    public ResponseEntity<ScheduleResponse> createSchedule(@AuthenticationPrincipal CustomUserDetails currentUser, @Valid @RequestBody ScheduleCreateRequest request){
+        ScheduleResponse response=scheduleService.createSchedule(currentUser.getId(), request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    @PatchMapping("/users/{userId}/schedules/{scheduleId}")
-    public ResponseEntity<ScheduleResponse> updateSchedule(@PathVariable Long userId, @PathVariable Long scheduleId,
+    @PatchMapping("/{scheduleId}")
+    public ResponseEntity<ScheduleResponse> updateSchedule(@AuthenticationPrincipal CustomUserDetails currentUser, @PathVariable Long scheduleId,
                                                            @Valid @RequestBody ScheduleUpdateRequest request){
-        ScheduleResponse response=scheduleService.updateSchedule(userId, scheduleId, request);
+        ScheduleResponse response=scheduleService.updateSchedule(currentUser.getId(), scheduleId, request);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
-    @DeleteMapping("users/{userId}/schedules/{scheduleId}")
-    public ResponseEntity<Void> deleteSchedule(@PathVariable Long userId, @PathVariable Long scheduleId){
-        scheduleService.deleteSchedule(userId, scheduleId);
+    @DeleteMapping("/{scheduleId}")
+    public ResponseEntity<Void> deleteSchedule(@AuthenticationPrincipal CustomUserDetails currentUser, @PathVariable Long scheduleId){
+        scheduleService.deleteSchedule(currentUser.getId(), scheduleId);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
         // return ResponseEntity.status(HttpStatus.NO_CONTENT).body(null);
     }
 
-    @GetMapping("/me/schedules")
+    @GetMapping
     public ResponseEntity<Page<ScheduleResponse>> listUserSchedules(@AuthenticationPrincipal CustomUserDetails currentUser,
                                                           @PageableDefault(size=10, sort={"updatedAt"}, direction= Sort.Direction.DESC) Pageable pageable){
         return ResponseEntity.status(HttpStatus.OK).body(scheduleService.listUserSchedules(currentUser.getId(), pageable));

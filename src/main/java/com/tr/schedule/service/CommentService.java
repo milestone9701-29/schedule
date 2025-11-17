@@ -15,6 +15,7 @@ import com.tr.schedule.repository.ScheduleRepository;
 import com.tr.schedule.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -31,6 +32,7 @@ public class CommentService {
     private final ScheduleRepository scheduleRepository;
     private final CommentMapper commentMapper;
 
+    @Transactional
     public CommentResponse createComment(Long userId, Long scheduleId, CommentCreateRequest request){
         // 1). 변환
         User user=getUserOrThrow(userId);
@@ -43,6 +45,7 @@ public class CommentService {
         return commentMapper.toCommentResponse(saved);
     }
 
+    @Transactional
     public CommentResponse updateComment(Long userId, Long commentId, CommentUpdateRequest request) {
         // 1). 변환
         User user=getUserOrThrow(userId);
@@ -50,12 +53,13 @@ public class CommentService {
         // 2). equals
         validateEachOther(user, comment);
         // 3). 실제 갱신
-        comment.commentUpdateFrom(request);
+        comment.commentUpdate(request.getContent());
         // 4). 저장.
         Comment saved = commentRepository.save(comment);
         // 5). 반환.
         return commentMapper.toCommentResponse(saved);
     }
+    @Transactional
     public void deleteComment(Long userId, Long commentId) {
         // 1). 변환
         User user=getUserOrThrow(userId);
@@ -65,6 +69,7 @@ public class CommentService {
         // 3). 삭제
         commentRepository.delete(comment);
     }
+    @Transactional(readOnly=true)
     public List<CommentResponse> listCommentsBySchedule(Long scheduleId){
         List<Comment> saved = commentRepository.findBySchedule_IdOrderByCreatedAtAsc(scheduleId);
         return commentMapper.toCommentResponseList(saved);

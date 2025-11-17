@@ -1,6 +1,7 @@
 package com.tr.schedule.controller;
 
 
+import com.tr.schedule.common.security.CustomUserDetails;
 import com.tr.schedule.dto.comment.CommentCreateRequest;
 
 import com.tr.schedule.dto.comment.CommentResponse;
@@ -10,37 +11,38 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api")
+@RequestMapping("/api/schedules")
 public class CommentController {
     private final CommentService commentService;
 
-    @PostMapping("/users/{userId}/schedules/{scheduleId}")
-    public ResponseEntity<CommentResponse> createComment(@PathVariable Long userId, @PathVariable Long scheduleId,
+    @PostMapping("/{scheduleId}/comments/")
+    public ResponseEntity<CommentResponse> createComment(@AuthenticationPrincipal CustomUserDetails currentUser, @PathVariable Long scheduleId,
                                                          @Valid @RequestBody CommentCreateRequest request){
-        CommentResponse response=commentService.createComment(userId, scheduleId, request);
+        CommentResponse response=commentService.createComment(currentUser.getId(), scheduleId, request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    @PatchMapping(("/users/{userId}/comments/{commentId}"))
-    public ResponseEntity<CommentResponse> updateComment(@PathVariable Long userId, @PathVariable Long commentId,
+    @PatchMapping(("/comments/{commentId}"))
+    public ResponseEntity<CommentResponse> updateComment(@AuthenticationPrincipal CustomUserDetails currentUser, @PathVariable Long commentId,
                                                          @Valid @RequestBody CommentUpdateRequest request){
-        CommentResponse response=commentService.updateComment(userId, commentId, request);
+        CommentResponse response=commentService.updateComment(currentUser.getId(), commentId, request);
         return  ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
-    @DeleteMapping("/users/{userId}/comments/{commentId}")
-    public ResponseEntity<Void> deleteComment(@PathVariable Long userId, @PathVariable Long commentId){
-        commentService.deleteComment(userId, commentId);
+    @DeleteMapping("/comments/{commentId}")
+    public ResponseEntity<Void> deleteComment(@AuthenticationPrincipal CustomUserDetails currentUser, @PathVariable Long commentId){
+        commentService.deleteComment(currentUser.getId(), commentId);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 
-    @GetMapping("/schedules/{scheduleId}")
+    @GetMapping("/{scheduleId}")
     public ResponseEntity<List<CommentResponse>> listComments(@PathVariable Long scheduleId){
         return ResponseEntity.status(HttpStatus.OK).body(commentService.listCommentsBySchedule(scheduleId));
     }

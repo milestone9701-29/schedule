@@ -1,28 +1,27 @@
 package com.tr.schedule.common.exception;
 
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
-import org.springframework.validation.FieldError;
-import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import java.util.HashMap;
-import java.util.Map;
 
 @Slf4j // logger
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ErrorResponse> handleValidation(MethodArgumentNotValidException ex){
-        Map<String, String> errors = new HashMap<>();
-        for(FieldError fielderror : ex.getBindingResult().getFieldErrors()){
-            errors.put(fielderror.getField(), fielderror.getDefaultMessage());
-        }
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorResponse())
+    @ExceptionHandler(BusinessException.class)
+    public ResponseEntity<ErrorResponse> handleBusiness(BusinessException ex, HttpServletRequest request) {
+        ErrorCode errorCode = ex.getErrorCode();
+        ErrorResponse Body=new ErrorResponse(
+            errorCode.getCode(),
+            ex.getMessage(),
+            request.getRequestURI()
+        );
+        return ResponseEntity.status(errorCode.getStatus()).body(body);
     }
 
     @ExceptionHandler(ResourceNotFoundException.class)
@@ -43,7 +42,7 @@ public class GlobalExceptionHandler {
     }
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ErrorResponse> handleIllegalArgumentException(IllegalArgumentException ex){
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorResponse("BAD_REQUEST", ex.getMessage()));
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorResponse();
     }
     @ExceptionHandler(CommentLimitExceededException.class)
     public ResponseEntity<ErrorResponse> handleCommentLimitExceeded(CommentLimitExceededException ex){

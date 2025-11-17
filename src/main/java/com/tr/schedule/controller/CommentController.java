@@ -18,31 +18,36 @@ import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/schedules")
+@RequestMapping("/api/schedules/{scheduleId}/comments")
 public class CommentController {
     private final CommentService commentService;
 
-    @PostMapping("/{scheduleId}/comments/")
-    public ResponseEntity<CommentResponse> createComment(@AuthenticationPrincipal CustomUserDetails currentUser, @PathVariable Long scheduleId,
+    @PostMapping
+    public ResponseEntity<CommentResponse> createComment(@AuthenticationPrincipal CustomUserDetails currentUser,
+                                                         @PathVariable Long scheduleId,
                                                          @Valid @RequestBody CommentCreateRequest request){
         CommentResponse response=commentService.createComment(currentUser.getId(), scheduleId, request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    @PatchMapping(("/comments/{commentId}"))
-    public ResponseEntity<CommentResponse> updateComment(@AuthenticationPrincipal CustomUserDetails currentUser, @PathVariable Long commentId,
+    @PatchMapping("/{commentId}")
+    public ResponseEntity<CommentResponse> updateComment(@AuthenticationPrincipal CustomUserDetails currentUser,
+                                                         @PathVariable Long scheduleId,
+                                                         @PathVariable Long commentId,
                                                          @Valid @RequestBody CommentUpdateRequest request){
-        CommentResponse response=commentService.updateComment(currentUser.getId(), commentId, request);
+        CommentResponse response=commentService.updateComment(currentUser.getId(), scheduleId ,commentId, request);
         return  ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
-    @DeleteMapping("/comments/{commentId}")
-    public ResponseEntity<Void> deleteComment(@AuthenticationPrincipal CustomUserDetails currentUser, @PathVariable Long commentId){
-        commentService.deleteComment(currentUser.getId(), commentId);
+    @DeleteMapping("/{commentId}")
+    public ResponseEntity<Void> deleteComment(@AuthenticationPrincipal CustomUserDetails currentUser,
+                                              @PathVariable Long scheduleId,
+                                              @PathVariable Long commentId){
+        commentService.deleteComment(currentUser.getId(), scheduleId, commentId);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 
-    @GetMapping("/{scheduleId}")
+    @GetMapping
     public ResponseEntity<List<CommentResponse>> listComments(@PathVariable Long scheduleId){
         return ResponseEntity.status(HttpStatus.OK).body(commentService.listCommentsBySchedule(scheduleId));
     }

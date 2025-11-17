@@ -1,7 +1,7 @@
 package com.tr.schedule.common.exception;
 
-public class PasswordMismatchException extends RuntimeException {
-    public PasswordMismatchException(String message) {
-        super(message);
+public class PasswordMismatchException extends BusinessException {
+    public PasswordMismatchException(ErrorCode errorCode) {
+        super(errorCode);
     }
 }

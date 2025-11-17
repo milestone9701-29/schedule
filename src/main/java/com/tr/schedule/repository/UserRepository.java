@@ -10,6 +10,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     boolean existsByEmail(String email); // 조건을 만족하는 데이터 찾을 경우 종료.
 
+
     // Optional<User> findById(Long id); id 찾기 : JpaRepository가 있는 시점에시 이미 있음 ㅋㅋㅋㅋㅋㅋ
 
 }

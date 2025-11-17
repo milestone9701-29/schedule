@@ -44,13 +44,13 @@ public class ScheduleController {
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
         // return ResponseEntity.status(HttpStatus.NO_CONTENT).body(null);
     }
-
-    @GetMapping
+    // 내 일정
+    @GetMapping("/me")
     public ResponseEntity<Page<ScheduleResponse>> listUserSchedules(@AuthenticationPrincipal CustomUserDetails currentUser,
                                                           @PageableDefault(size=10, sort={"updatedAt"}, direction= Sort.Direction.DESC) Pageable pageable){
         return ResponseEntity.status(HttpStatus.OK).body(scheduleService.listUserSchedules(currentUser.getId(), pageable));
     }
-
+    // 전체
     @GetMapping
     public ResponseEntity<Page<ScheduleResponse>> listSchedules(@PageableDefault(size=10, sort={"updatedAt"}, direction= Sort.Direction.DESC) Pageable pageable){
         return ResponseEntity.status(HttpStatus.OK).body(scheduleService.listSchedules(pageable));

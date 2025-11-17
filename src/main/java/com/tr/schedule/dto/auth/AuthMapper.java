@@ -15,7 +15,6 @@ public class AuthMapper{
             .passwordHash(encodedPassword)
             .build();
     }
-
     public UserResponse toUserResponse(User user){ // 출력 값
         return new UserResponse(
             user.getId(),

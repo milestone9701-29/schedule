@@ -2,6 +2,7 @@ package com.tr.schedule.service;
 
 
 import com.tr.schedule.common.exception.BusinessAccessDeniedException;
+import com.tr.schedule.common.exception.ErrorCode;
 import com.tr.schedule.common.exception.ResourceNotFoundException;
 import com.tr.schedule.domain.Comment;
 import com.tr.schedule.domain.Schedule;
@@ -46,12 +47,13 @@ public class CommentService {
     }
 
     @Transactional
-    public CommentResponse updateComment(Long userId, Long commentId, CommentUpdateRequest request) {
+    public CommentResponse updateComment(Long userId, Long scheduleId, Long commentId, CommentUpdateRequest request) {
         // 1). 변환
         User user=getUserOrThrow(userId);
+        Schedule schedule=getScheduleOrThrow(scheduleId);
         Comment comment=getCommentOrThrow(commentId);
         // 2). equals
-        validateEachOther(user, comment);
+        validateEachOther(user, schedule, comment);
         // 3). 실제 갱신
         comment.commentUpdate(request.getContent());
         // 4). 저장.
@@ -60,12 +62,13 @@ public class CommentService {
         return commentMapper.toCommentResponse(saved);
     }
     @Transactional
-    public void deleteComment(Long userId, Long commentId) {
+    public void deleteComment(Long userId, Long scheduleId, Long commentId) {
         // 1). 변환
         User user=getUserOrThrow(userId);
+        Schedule schedule=getScheduleOrThrow(scheduleId);
         Comment comment=getCommentOrThrow(commentId);
         // 2). equals
-        validateEachOther(user, comment);
+        validateEachOther(user, schedule, comment);
         // 3). 삭제
         commentRepository.delete(comment);
     }
@@ -78,17 +81,22 @@ public class CommentService {
     // 정리용 헬퍼 메서드
     private User getUserOrThrow(Long userId){
         return userRepository.findById(userId)
-            .orElseThrow(() -> new ResourceNotFoundException("Cannot find userId : " + userId));
+            .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.BAD_REQUEST));
     }
     private Schedule getScheduleOrThrow(Long scheduleId){
         return scheduleRepository.findById(scheduleId)
-            .orElseThrow(() -> new ResourceNotFoundException("Cannot find scheduleId : " + scheduleId));
+            .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.BAD_REQUEST));
     }
     private Comment getCommentOrThrow(Long commentId){
         return commentRepository.findById(commentId)
-            .orElseThrow(() -> new ResourceNotFoundException("Cannot find commentId : " + commentId));
+            .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.BAD_REQUEST));
     }
-    private void validateEachOther(User user, Comment comment){
-        if (!user.getId().equals(comment.getAuthor().getId())) { throw new BusinessAccessDeniedException("ID 불일치"); }
+
+    // 정합성..
+    private void validateEachOther(User user, Schedule schedule, Comment comment){
+        if (!user.getId().equals(comment.getAuthor().getId())) { throw new BusinessAccessDeniedException(ErrorCode.BAD_REQUEST); }
+        if (!schedule.getId().equals(comment.getAuthor().getId())) {throw new BusinessAccessDeniedException(ErrorCode.BAD_REQUEST); }
         }
+
+
 }

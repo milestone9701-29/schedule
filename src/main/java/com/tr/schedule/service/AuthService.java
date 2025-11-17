@@ -1,7 +1,9 @@
 package com.tr.schedule.service;
 
 
-import com.tr.schedule.common.exception.ResourceNotFoundException;
+import com.tr.schedule.common.exception.EmailMismatchException;
+import com.tr.schedule.common.exception.ErrorCode;
+import com.tr.schedule.common.exception.PasswordMismatchException;
 import com.tr.schedule.domain.Role;
 import com.tr.schedule.domain.User;
 import com.tr.schedule.dto.auth.AuthMapper;
@@ -30,7 +32,7 @@ public class AuthService {
     @Transactional
     public User signUp(SignupRequest request){
         if(checkingEmail(request)){ // 검사
-            throw new IllegalArgumentException("Email already exists");
+            throw new IllegalArgumentException();
         }
         String encodedPassword=passwordEncoder.encode(request.getPassword());
 
@@ -44,8 +46,8 @@ public class AuthService {
     @Transactional
     public User login(LoginRequest request){
         User user=findLoginEmail(request);
-        if(!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())){ // matches로 검증
-            throw new IllegalArgumentException("Invalid Password");
+        if(!checkingPassword(request, user)){ // matches로 검증
+            throw new PasswordMismatchException(ErrorCode.AUTH_INVALID_PASSWORD);
         }
         return user;
     }
@@ -53,9 +55,12 @@ public class AuthService {
     // 정리용 헬퍼 메서드
     private User findLoginEmail(LoginRequest request){
         return userRepository.findByEmail(request.getEmail()) // 검사 + 대입
-            .orElseThrow(() -> new ResourceNotFoundException("Invalid Email"));
+            .orElseThrow(() -> new EmailMismatchException(ErrorCode.AUTH_INVALID_EMAIL));
     }
     private boolean checkingEmail(SignupRequest request){
         return userRepository.existsByEmail(request.getEmail());
+    }
+    private boolean checkingPassword(LoginRequest request, User user){
+        return passwordEncoder.matches(request.getPassword(), user.getPasswordHash());
     }
 }

@@ -1,7 +1,7 @@
 package com.tr.schedule.common.exception;
 
-public class BusinessAccessDeniedException extends RuntimeException {
-    public BusinessAccessDeniedException(String message) {
-        super(message);
+public class BusinessAccessDeniedException extends BusinessException {
+    public BusinessAccessDeniedException(ErrorCode errorCode) {
+        super(errorCode);
     }
 }

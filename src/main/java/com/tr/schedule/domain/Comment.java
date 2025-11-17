@@ -1,7 +1,7 @@
 package com.tr.schedule.domain;
 
 
-import com.tr.schedule.dto.comment.CommentUpdateRequest;
+
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;

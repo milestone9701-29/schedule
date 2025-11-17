@@ -12,7 +12,7 @@ import lombok.NoArgsConstructor;
 
 // 로그인 필요 입력 요구사항 : email, password.
 @Getter
-@NoArgsConstructor(access=AccessLevel.PROTECTED)
+@NoArgsConstructor(access= AccessLevel.PROTECTED)
 public class LoginRequest {
 
     @NotBlank @Email @Size(max=100)
@@ -20,4 +20,9 @@ public class LoginRequest {
 
     @NotBlank @Size(min=8, max=100)
     private String password;
+
+    public LoginRequest(String email, String password) {
+        this.email = email;
+        this.password = password; // ← 이게 빠져 있었음
+    }
 }

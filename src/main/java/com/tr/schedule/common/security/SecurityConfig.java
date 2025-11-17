@@ -1,6 +1,7 @@
 package com.tr.schedule.common.security;
 
 
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -26,13 +27,26 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain springSecurityFilterChain(
+    public SecurityFilterChain securityFilterChain(
         HttpSecurity http,
         JwtAuthenticationFilter jwtAuthenticationFilter
     ) throws Exception {
         http
             .csrf(csrf -> csrf.disable())
             .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+
+            // 예외 핸들링.
+            .exceptionHandling(ex -> ex
+                // 미인증(토큰 없음, 깨짐) -> 401
+                .authenticationEntryPoint((request, response, authException) -> {
+                    response.sendError(HttpServletResponse.SC_UNAUTHORIZED);
+                })
+                // 인증은 됐으나, 권한 부족 -> 403
+                .accessDeniedHandler((request, response, accessDeniedException) -> {
+                    response.sendError(HttpServletResponse.SC_FORBIDDEN);
+                })
+            )
+
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/schedules/**").hasRole("USER") // 회원가입, 로그인은 모두.

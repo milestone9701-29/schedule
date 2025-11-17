@@ -6,6 +6,7 @@ import com.tr.schedule.dto.user.UserProfileResponse;
 import com.tr.schedule.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -29,6 +30,7 @@ public class UserController {
     }
 
     // 특정 유저 정보 조회 (관리자 or 공개범위)
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/{userId}")
     public ResponseEntity<UserProfileResponse> getUserProfile(@PathVariable Long userId) {
         return ResponseEntity.ok(userService.getProfile(userId));

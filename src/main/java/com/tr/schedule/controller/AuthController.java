@@ -9,6 +9,7 @@ import com.tr.schedule.dto.auth.*;
 import com.tr.schedule.service.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -26,7 +27,7 @@ public class AuthController{
     @PostMapping("/signup")
     public ResponseEntity<UserResponse> signUp(@Valid @RequestBody SignupRequest request){
         User saved=authService.signUp(request);
-        return ResponseEntity.ok(authMapper.toUserResponse(saved));
+        return ResponseEntity.status(HttpStatus.CREATED).body(authMapper.toUserResponse(saved));
     }
 
     @PostMapping("/login") // token

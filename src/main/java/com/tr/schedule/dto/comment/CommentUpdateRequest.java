@@ -12,4 +12,8 @@ import lombok.NoArgsConstructor;
 public class CommentUpdateRequest {
     @NotBlank @Size(max=100)
     private String content;
+
+    public CommentUpdateRequest(String content) {
+        this.content=content;
+    }
 }

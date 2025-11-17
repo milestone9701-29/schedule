@@ -14,4 +14,9 @@ public class ScheduleCreateRequest {
     private String title;
     @NotBlank @Size(max=200)
     private String content;
+
+    public ScheduleCreateRequest(String title, String content) {
+        this.title = title;
+        this.content = content;
+    }
 }

@@ -50,6 +50,7 @@ public class JwtTokenProvider {
         Claims claims=parseClaims(token);
         return Long.parseLong(claims.getSubject());
     }
+
     public boolean validateToken(String token){ // 검증
         try{
             parseClaims(token);
@@ -58,7 +59,8 @@ public class JwtTokenProvider {
             return false;
         }
     }
-    public Claims parseClaims(String token){
+
+    public Claims parseClaims(String token){ // 파싱
         return Jwts.parser()
             .verifyWith(getSigningKey())
             .build()

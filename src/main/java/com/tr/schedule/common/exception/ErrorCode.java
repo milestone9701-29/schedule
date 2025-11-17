@@ -13,8 +13,8 @@ public enum ErrorCode {
     INTERNAL_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "C500", "알 수 없는 오류입니다."),
 
     // Auth
-    AUTH_INVALID_PASSWORD(HttpStatus.FORBIDDEN, "A403", "Password가 올바르지 않습니다."),
-    AUTH_INVALID_EMAIL(HttpStatus.FORBIDDEN, "A403", "Email이 올바르지 않습니다."),
+    AUTH_INVALID_PASSWORD(HttpStatus.UNAUTHORIZED, "A401", "Password가 올바르지 않습니다."),
+    AUTH_INVALID_EMAIL(HttpStatus.UNAUTHORIZED, "A401", "Email이 올바르지 않습니다."),
     AUTH_TOKEN_EXPIRED(HttpStatus.UNAUTHORIZED, "A401", "Token이 만료되었습니다."),
 
     // Schedule

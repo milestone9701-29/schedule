@@ -32,7 +32,7 @@ public class AuthService {
     @Transactional
     public User signUp(SignupRequest request){
         if(checkingEmail(request)){ // 검사
-            throw new IllegalArgumentException();
+            throw new EmailMismatchException(ErrorCode.AUTH_INVALID_EMAIL);
         }
         String encodedPassword=passwordEncoder.encode(request.getPassword());
 

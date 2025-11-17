@@ -47,8 +47,8 @@ public class JwtTokenProvider {
 
     // token에서 userId 추출
     public Long getUserId(String token){
-        Claims claims=parseClaims(token);
-        return Long.parseLong(claims.getSubject());
+        Claims claims=parseClaims(token); // 파싱
+        return Long.parseLong(claims.getSubject()); // Long으로 파싱
     }
 
     public boolean validateToken(String token){ // 검증

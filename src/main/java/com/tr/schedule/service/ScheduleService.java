@@ -92,11 +92,11 @@ public class ScheduleService {
     // 정리용 헬퍼 메서드.
     private User getUserOrThrow(Long userId){
         return userRepository.findById(userId)
-            .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.SCHEDULE_FORBIDDEN));
+            .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.SCHEDULE_NOT_FOUND));
     }
     private Schedule getScheduleOrThrow(Long scheduleId){
         return scheduleRepository.findById(scheduleId)
-            .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.SCHEDULE_FORBIDDEN));
+            .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.SCHEDULE_NOT_FOUND));
     }
     private void validateEachOther(User user, Schedule schedule){
         if (!user.getId().equals(schedule.getOwner().getId())) {

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tr.schedule.dto.auth.SignupRequest;
 import com.tr.schedule.dto.auth.LoginRequest;
+import com.tr.schedule.dto.schedule.ScheduleCreateRequest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -116,7 +117,7 @@ public class AuthAndUserIntegrationTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(loginRequest)))
             // 네 GlobalExceptionHandler 매핑에 맞게 401 혹은 403으로 수정
-            .andExpect(status().isForbidden())  // or isForbidden()
+            .andExpect(status().isUnauthorized())  // or isForbidden()
             .andExpect(jsonPath("$.code").exists())
             .andExpect(jsonPath("$.message").isNotEmpty());
     }
@@ -143,5 +144,66 @@ public class AuthAndUserIntegrationTest {
     void getMyProfile_withoutToken_returnsUnauthorized() throws Exception {
         mockMvc.perform(get("/api/users/me"))
             .andExpect(status().isUnauthorized()); // Security 설정에 따라 401/403 맞춰 수정
+    }
+
+    @Test
+    void createSchedule_withValidToken_returnsCreatedSchedule() throws Exception{
+        // given 기본 유저로 회원가입, 로그인
+         String token=signUpAndLoginDefaultUser();
+         // DTO
+        ScheduleCreateRequest request = new ScheduleCreateRequest(
+            "테스트 일정", // title
+            "테스트 내용"// content
+        );
+        //when and then
+         mockMvc.perform(post("/api/schedules")
+                 .header("Authorization", "Bearer " + token)
+                 .contentType(MediaType.APPLICATION_JSON)
+                 .content(objectMapper.writeValueAsString(request)))
+             .andExpect(status().isCreated()) // 201
+             .andExpect(jsonPath("$.title").value("테스트 일정"))
+             .andExpect(jsonPath("$.content").value("테스트 내용"));
+         // 응답 구조에 따라 ownerId, createdAt 등도 확인할 것.
+     }
+
+    @Test
+    void createSchedule_withoutToken_returnsUnauthorized() throws Exception {
+        ScheduleCreateRequest request = new ScheduleCreateRequest(
+            "익명 일정",
+            "익명 내용"
+        );
+
+        mockMvc.perform(post("/api/schedules")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+            .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void getMySchedules_withValidToken_returnsOnlyMySchedules() throws Exception {
+        String token = signUpAndLoginDefaultUser();
+
+        // 같은 유저로 일정 두 개 생성
+        createSchedule(token, "제목1");
+        createSchedule(token, "제목2");
+
+        mockMvc.perform(get("/api/schedules/me")
+                .header("Authorization", "Bearer " + token))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.content.length()").value(2));
+        // 응답이 List인지, page 래퍼인지에 따라 .andExpect(jsonPath("$.content", hasSize(2))); 등.
+    }
+
+    private void createSchedule(String token, String title) throws Exception {
+        ScheduleCreateRequest request = new ScheduleCreateRequest(
+            title,
+            "테스트 내용"
+        );
+
+        mockMvc.perform(post("/api/schedules")
+                .header("Authorization", "Bearer " + token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+            .andExpect(status().isCreated());
     }
 }

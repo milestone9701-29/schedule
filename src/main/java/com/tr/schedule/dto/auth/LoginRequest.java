@@ -23,6 +23,6 @@ public class LoginRequest {
 
     public LoginRequest(String email, String password) {
         this.email = email;
-        this.password = password; // ← 이게 빠져 있었음
+        this.password = password;
     }
 }

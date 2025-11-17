@@ -1,7 +1,7 @@
 package com.tr.schedule.domain;
 
 // @Version : Entity 수정 시 필드 값 자동 증가. : cnt++와 같이 우선순위 잡는데 쓰는 모양.
-import com.tr.schedule.dto.schedule.ScheduleUpdateRequest;
+
 import jakarta.persistence.*;
 
 import lombok.AccessLevel;

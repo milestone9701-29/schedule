@@ -4,21 +4,24 @@ package com.tr.schedule.service;
 import com.tr.schedule.common.exception.BusinessAccessDeniedException;
 import com.tr.schedule.common.exception.ErrorCode;
 import com.tr.schedule.common.exception.ResourceNotFoundException;
-import com.tr.schedule.domain.Comment;
-import com.tr.schedule.domain.Schedule;
-import com.tr.schedule.domain.User;
+import com.tr.schedule.common.security.CurrentUser;
+import com.tr.schedule.domain.*;
 import com.tr.schedule.dto.comment.CommentCreateRequest;
 import com.tr.schedule.dto.comment.CommentResponse;
 import com.tr.schedule.dto.comment.CommentMapper;
 import com.tr.schedule.dto.comment.CommentUpdateRequest;
 import com.tr.schedule.repository.CommentRepository;
+import com.tr.schedule.repository.IdempotencyKeyRepository;
 import com.tr.schedule.repository.ScheduleRepository;
 import com.tr.schedule.repository.UserRepository;
+import jakarta.annotation.Nullable;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 
 // 2025-11-14 : V1 : scheduleId(제출 사양) : commentId, userId 사용
 // ~ V2 : 개선.
@@ -32,43 +35,57 @@ public class CommentService {
     private final UserRepository userRepository;
     private final ScheduleRepository scheduleRepository;
     private final CommentMapper commentMapper;
+    private final IdempotencyKeyRepository idempotencyKeyRepository;
 
     @Transactional
-    public CommentResponse createComment(Long userId, Long scheduleId, CommentCreateRequest request){
+    public CommentResponse createComment(@AuthenticationPrincipal CurrentUser currentUser,
+                                         Long scheduleId,
+                                         CommentCreateRequest request,
+                                         @Nullable String idempotencyKey
+    ){
+        // 1). 멱등성 키가 있으면 조회
+        if(idempotencyKey!=null&&!idempotencyKey.isBlank()){
+            Optional<IdempotencyKey> existing=idempotencyKeyRepository.findByKeyAndUserId(idempotencyKey, currentUser.id());
+
+            if(existing.isPresent()){
+                Long commentId=existing.get().getSchedule(scheduleId).getCommentId();
+                Comment comment=getCommentOrThrow(commentId);
+                return commentMapper.toCommentResponse(comment);
+            }
+        }
         // 1). 변환
-        User user=getUserOrThrow(userId);
+        User author=getUserOrThrow(currentUser.id());
         Schedule schedule=getScheduleOrThrow(scheduleId);
-        // 2). dto : MapperClass 사용.
-        Comment comment=commentMapper.toCommentEntity(user, schedule, request);
+        // 2). MapperClass
+        Comment comment=Comment.of(schedule, author, request.getContent());
         // 3). 실제 저장
-        Comment saved=commentRepository.save(comment);
+        commentRepository.save(comment);
         // 4). 반환.
-        return commentMapper.toCommentResponse(saved);
+        return commentMapper.toCommentResponse(comment);
     }
 
     @Transactional
     public CommentResponse updateComment(Long userId, Long scheduleId, Long commentId, CommentUpdateRequest request) {
         // 1). 변환
-        User user=getUserOrThrow(userId);
+        User author=getUserOrThrow(userId);
         Schedule schedule=getScheduleOrThrow(scheduleId);
         Comment comment=getCommentOrThrow(commentId);
         // 2). equals
-        validateEachOther(user, schedule, comment);
+        validateEachOther(schedule, author, comment);
         // 3). 실제 갱신
-        comment.commentUpdate(request.getContent());
+        comment.update(request.getContent());
         // 4). 저장.
-        Comment saved = commentRepository.save(comment);
         // 5). 반환.
-        return commentMapper.toCommentResponse(saved);
+        return commentMapper.toCommentResponse(comment);
     }
     @Transactional
     public void deleteComment(Long userId, Long scheduleId, Long commentId) {
         // 1). 변환
-        User user=getUserOrThrow(userId);
+        User author=getUserOrThrow(userId);
         Schedule schedule=getScheduleOrThrow(scheduleId);
         Comment comment=getCommentOrThrow(commentId);
         // 2). equals
-        validateEachOther(user, schedule, comment);
+        validateEachOther(schedule, author, comment);
         // 3). 삭제
         commentRepository.delete(comment);
     }
@@ -93,10 +110,20 @@ public class CommentService {
     }
 
     // 정합성..
-    private void validateEachOther(User user, Schedule schedule, Comment comment){
-        if (!user.getId().equals(comment.getAuthor().getId())) { throw new BusinessAccessDeniedException(ErrorCode.BAD_REQUEST); }
-        if (!schedule.getId().equals(comment.getAuthor().getId())) {throw new BusinessAccessDeniedException(ErrorCode.BAD_REQUEST); }
+    private void validateEachOther(Schedule schedule, CurrentUser currentUser, Comment comment) {
+        // ADMIN, MANAGER : 같은 Schedule 안의 Comment이면, 누구의 것이든 수정 및 삭제가 가능.
+        if (currentUser.isAdmin() || currentUser.isManager()) {
+            if (!schedule.getId().equals(comment.getSchedule().getId())) {
+                throw new BusinessAccessDeniedException(ErrorCode.BAD_REQUEST);
+            }
+            return;
         }
-
-
+        // USER : 본인 댓글 및 스케줄 일치 : 정합성을 위해 남겨둠.
+        if (!currentUser.id().equals(comment.getAuthor().getId())) { // 저자 체크
+            throw new BusinessAccessDeniedException(ErrorCode.BAD_REQUEST);
+        }
+        if (!schedule.getId().equals(comment.getSchedule().getId())) { // schedule 간의 id 체크
+            throw new BusinessAccessDeniedException(ErrorCode.BAD_REQUEST);
+        }
+    }
 }

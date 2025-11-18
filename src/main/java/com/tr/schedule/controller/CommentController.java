@@ -1,6 +1,7 @@
 package com.tr.schedule.controller;
 
 
+import com.tr.schedule.common.security.CurrentUser;
 import com.tr.schedule.common.security.CustomUserDetails;
 import com.tr.schedule.dto.comment.CommentCreateRequest;
 
@@ -18,32 +19,38 @@ import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/schedules/{scheduleId}/comments")
+@RequestMapping("/api/schedules/{scheduleId}/comments") // 댓글은 스케쥴에 종속하기 때문.
 public class CommentController {
     private final CommentService commentService;
 
     @PostMapping
-    public ResponseEntity<CommentResponse> createComment(@AuthenticationPrincipal CustomUserDetails currentUser,
+    public ResponseEntity<CommentResponse> createComment(@AuthenticationPrincipal CustomUserDetails principal,
                                                          @PathVariable Long scheduleId,
                                                          @Valid @RequestBody CommentCreateRequest request){
-        CommentResponse response=commentService.createComment(currentUser.getId(), scheduleId, request);
+        CurrentUser currentUser=CurrentUser.from(principal);
+
+        CommentResponse response=commentService.createComment(currentUser, scheduleId, request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @PatchMapping("/{commentId}")
-    public ResponseEntity<CommentResponse> updateComment(@AuthenticationPrincipal CustomUserDetails currentUser,
+    public ResponseEntity<CommentResponse> updateComment(@AuthenticationPrincipal CustomUserDetails principal,
                                                          @PathVariable Long scheduleId,
                                                          @PathVariable Long commentId,
                                                          @Valid @RequestBody CommentUpdateRequest request){
-        CommentResponse response=commentService.updateComment(currentUser.getId(), scheduleId ,commentId, request);
+        CurrentUser currentUser=CurrentUser.from(principal);
+
+        CommentResponse response=commentService.updateComment(currentUser, scheduleId ,commentId, request);
         return  ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
     @DeleteMapping("/{commentId}")
-    public ResponseEntity<Void> deleteComment(@AuthenticationPrincipal CustomUserDetails currentUser,
+    public ResponseEntity<Void> deleteComment(@AuthenticationPrincipal CustomUserDetails principal,
                                               @PathVariable Long scheduleId,
                                               @PathVariable Long commentId){
-        commentService.deleteComment(currentUser.getId(), scheduleId, commentId);
+        CurrentUser currentUser=CurrentUser.from(principal);
+
+        commentService.deleteComment(currentUser, scheduleId, commentId);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 

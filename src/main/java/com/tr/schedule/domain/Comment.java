@@ -18,9 +18,13 @@ import lombok.NoArgsConstructor;
 public class Comment extends BaseTimeEntity {
     @Id @GeneratedValue(strategy= GenerationType.IDENTITY)
     private Long id;
+
+    // 어떠한 일정의 댓글인지?
     @ManyToOne(fetch=FetchType.LAZY, optional=false)
     @JoinColumn(name="schedule_id", nullable=false)
     private Schedule schedule;
+
+    // author
     @ManyToOne(fetch=FetchType.LAZY)
     @JoinColumn(name="author_id", nullable=false)
     private User author;
@@ -31,13 +35,23 @@ public class Comment extends BaseTimeEntity {
     private Long version;
 
     // 직접 작성 : schedule, author, content
-    @Builder
-    public Comment(User author, Schedule schedule, String content) {
-        this.author = author;
+    @Builder(access=AccessLevel.PRIVATE)
+    private Comment(Schedule schedule, User author, String content) {
         this.schedule = schedule;
+        this.author = author;
         this.content = content;
     }
-    public void commentUpdate(String content){
+
+    public static Comment of(Schedule schedule, User author, String content){
+        return Comment.builder()
+            .schedule(schedule)
+            .author(author)
+            .content(content)
+            .build();
+    }
+
+    // 내용 수정.
+    public void update(String content){
         this.content = content;
     }
 }

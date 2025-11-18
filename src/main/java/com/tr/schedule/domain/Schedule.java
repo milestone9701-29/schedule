@@ -32,13 +32,24 @@ public class Schedule extends BaseTimeEntity {
     private Long version;
 
     // 직접 작성 : owner, title, content
-    @Builder
-    public Schedule(User owner, String title, String content){
+    // 도메인 생성 전용. : 외부 Access 접근 제어 : PRIVATE.
+    @Builder(access=AccessLevel.PRIVATE)
+    private Schedule(User owner, String title, String content){
         this.owner = owner;
         this.title = title;
         this.content = content;
     }
-    public void scheduleUpdate(String title, String content){
+
+    // 정적 팩토리 메서드
+    public static Schedule of(User owner, String title, String content){
+        return Schedule.builder()
+            .owner(owner)
+            .title(title)
+            .content(content)
+            .build();
+    }
+
+    public void update(String title, String content){
         this.title = title;
         this.content = content;
     }

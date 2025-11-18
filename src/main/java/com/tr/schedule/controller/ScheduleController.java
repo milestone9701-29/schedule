@@ -1,5 +1,6 @@
 package com.tr.schedule.controller;
 
+import com.tr.schedule.common.security.CurrentUser;
 import com.tr.schedule.common.security.CustomUserDetails;
 import com.tr.schedule.dto.schedule.ScheduleCreateRequest;
 import com.tr.schedule.dto.schedule.ScheduleResponse;
@@ -26,33 +27,48 @@ public class ScheduleController {
 
 
     @PostMapping
-    public ResponseEntity<ScheduleResponse> createSchedule(@AuthenticationPrincipal CustomUserDetails currentUser, @Valid @RequestBody ScheduleCreateRequest request){
-        ScheduleResponse response=scheduleService.createSchedule(currentUser.getId(), request);
+    public ResponseEntity<ScheduleResponse> createSchedule(@AuthenticationPrincipal CustomUserDetails principal,
+                                                           @Valid @RequestBody ScheduleCreateRequest request,
+                                                           @RequestHeader(value="Idempotency-Key", required=false) String idempotencyKey){
+        CurrentUser currentUser=CurrentUser.from(principal); // User Check
+
+        ScheduleResponse response=scheduleService.createSchedule(currentUser, request, idempotencyKey);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @PatchMapping("/{scheduleId}")
-    public ResponseEntity<ScheduleResponse> updateSchedule(@AuthenticationPrincipal CustomUserDetails currentUser, @PathVariable Long scheduleId,
+    public ResponseEntity<ScheduleResponse> updateSchedule(@AuthenticationPrincipal CustomUserDetails principal,
+                                                           @PathVariable Long scheduleId,
                                                            @Valid @RequestBody ScheduleUpdateRequest request){
-        ScheduleResponse response=scheduleService.updateSchedule(currentUser.getId(), scheduleId, request);
+        CurrentUser currentUser=CurrentUser.from(principal); // User Check
+
+        ScheduleResponse response=scheduleService.updateSchedule(currentUser, scheduleId, request);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
     @DeleteMapping("/{scheduleId}")
-    public ResponseEntity<Void> deleteSchedule(@AuthenticationPrincipal CustomUserDetails currentUser, @PathVariable Long scheduleId){
-        scheduleService.deleteSchedule(currentUser.getId(), scheduleId);
+    public ResponseEntity<Void> deleteSchedule(@AuthenticationPrincipal CustomUserDetails principal,
+                                               @PathVariable Long scheduleId){
+        CurrentUser currentUser=CurrentUser.from(principal);
+
+        scheduleService.deleteSchedule(currentUser, scheduleId);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
         // return ResponseEntity.status(HttpStatus.NO_CONTENT).body(null);
     }
     // 내 일정
     @GetMapping("/me")
-    public ResponseEntity<Page<ScheduleResponse>> listUserSchedules(@AuthenticationPrincipal CustomUserDetails currentUser,
-                                                          @PageableDefault(size=10, sort={"updatedAt"}, direction= Sort.Direction.DESC) Pageable pageable){
-        return ResponseEntity.status(HttpStatus.OK).body(scheduleService.listUserSchedules(currentUser.getId(), pageable));
+    public ResponseEntity<Page<ScheduleResponse>> listUserSchedules(@AuthenticationPrincipal CustomUserDetails principal,
+                                                          @PageableDefault
+                                                              (size=10, sort={"updatedAt"}, direction= Sort.Direction.DESC) Pageable pageable){
+        CurrentUser currentUser=CurrentUser.from(principal);
+
+        return ResponseEntity.status(HttpStatus.OK).body(scheduleService.listUserSchedules(currentUser, pageable));
     }
     // 전체
     @GetMapping
-    public ResponseEntity<Page<ScheduleResponse>> listSchedules(@PageableDefault(size=10, sort={"updatedAt"}, direction= Sort.Direction.DESC) Pageable pageable){
+    public ResponseEntity<Page<ScheduleResponse>> listSchedules(@PageableDefault
+                                                                        (size=10, sort={"updatedAt"}, direction= Sort.Direction.DESC) Pageable pageable){
         return ResponseEntity.status(HttpStatus.OK).body(scheduleService.listSchedules(pageable));
     }
+
 }

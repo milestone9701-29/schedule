@@ -5,7 +5,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -15,6 +15,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity(prePostEnabled=true)
 @RequiredArgsConstructor
 public class SecurityConfig {
 
@@ -47,12 +48,34 @@ public class SecurityConfig {
                 })
             )
 
-            .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/auth/**").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/schedules/**").hasRole("USER") // 회원가입, 로그인은 모두.
-                .requestMatchers("/api/admin/**").hasRole("ADMIN") // 관리자.
+            // --- // 2025-11-18
+
+            .authorizeHttpRequests(auth->auth
+                // 인증 불필요
+                .requestMatchers("/api/auth/**", "/h2-console/**").permitAll()
+                .requestMatchers("/actuator/health").permitAll() // actuator 2025-11-18
+
+                // ADMIN 전용 영역
+                .requestMatchers("/api/admin/**").hasRole("ADMIN")
+
+                // 경로별로 명확히 나뉘어 있어서 순서 영향이 거의 없는 편.
+                // MANAGER, ADMIN,  공통 관리 영역("/api/manage/**") : 구현 중.
+                .requestMatchers("/api/manage/**").hasAnyRole("MANAGER", "ADMIN")
+
+                // User info
+                .requestMatchers("/api/users/me").hasRole("USER")
+
+                // 타인 정보 조회 : MANAGER, ADMIN  : 추가 관리 기능 대비
+                .requestMatchers("/api/users/**").hasAnyRole("MANAGER", "ADMIN")
+
+                // 일정, 댓글 : Login 한 User만.
+                .requestMatchers("/api/schedules/**").hasRole("USER")
+                .requestMatchers("/api/schedules/*/comments/**").hasRole("USER")
+
+                // 인증만 된다면 허용
                 .anyRequest().authenticated()
             )
+
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();

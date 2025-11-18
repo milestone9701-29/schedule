@@ -26,17 +26,15 @@ public class UserService{
     private final UserMapper userMapper;
 
     @Transactional(readOnly=true)
-    public UserProfileResponse getProfile(@AuthenticationPrincipal CurrentUser currentUser) {
-        User user = getUserOrThrow(currentUser.id());
+    public UserProfileResponse getProfile(Long userId) {
+        User user = getUserOrThrow(userId);
 
         return userMapper.toUserProfileResponse(user);
     }
 
-
-
     // 정리용 헬퍼 메서드
-    private User getUserOrThrow(@AuthenticationPrincipal CurrentUser currentUser){
-        return userRepository.findById(currentUser.id())
+    private User getUserOrThrow(Long userId){
+        return userRepository.findById(userId)
             .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.SCHEDULE_FORBIDDEN));
     }
 }

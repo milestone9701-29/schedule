@@ -10,10 +10,7 @@ import com.tr.schedule.dto.comment.CommentCreateRequest;
 import com.tr.schedule.dto.comment.CommentResponse;
 import com.tr.schedule.dto.comment.CommentMapper;
 import com.tr.schedule.dto.comment.CommentUpdateRequest;
-import com.tr.schedule.repository.CommentRepository;
-import com.tr.schedule.repository.IdempotencyKeyRepository;
-import com.tr.schedule.repository.ScheduleRepository;
-import com.tr.schedule.repository.UserRepository;
+import com.tr.schedule.repository.*;
 import jakarta.annotation.Nullable;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -35,7 +32,7 @@ public class CommentService {
     private final UserRepository userRepository;
     private final ScheduleRepository scheduleRepository;
     private final CommentMapper commentMapper;
-    private final IdempotencyKeyRepository idempotencyKeyRepository;
+    private final CommentIdempotencyKeyRepository commentIdempotencyKeyRepository;
 
     @Transactional
     public CommentResponse createComment(@AuthenticationPrincipal CurrentUser currentUser,
@@ -45,33 +42,35 @@ public class CommentService {
     ){
         // 1). 멱등성 키가 있으면 조회
         if(idempotencyKey!=null&&!idempotencyKey.isBlank()){
-            Optional<IdempotencyKey> existing=idempotencyKeyRepository.findByKeyAndUserId(idempotencyKey, currentUser.id());
+            Optional<CommentIdempotencyKey> existing=commentIdempotencyKeyRepository.
+                findByKeyAndUserIdAndScheduleId(idempotencyKey, currentUser.id(), scheduleId);
 
             if(existing.isPresent()){
-                Long commentId=existing.get().getSchedule(scheduleId).getCommentId();
+                Long commentId=existing.get().getCommentId();
                 Comment comment=getCommentOrThrow(commentId);
                 return commentMapper.toCommentResponse(comment);
             }
         }
-        // 1). 변환
+        // 2). 변환
         User author=getUserOrThrow(currentUser.id());
         Schedule schedule=getScheduleOrThrow(scheduleId);
-        // 2). MapperClass
+        // 3). MapperClass
         Comment comment=Comment.of(schedule, author, request.getContent());
-        // 3). 실제 저장
+        // 4). 실제 저장
         commentRepository.save(comment);
-        // 4). 반환.
+        // 5). 반환.
         return commentMapper.toCommentResponse(comment);
     }
 
     @Transactional
-    public CommentResponse updateComment(Long userId, Long scheduleId, Long commentId, CommentUpdateRequest request) {
+    public CommentResponse updateComment(@AuthenticationPrincipal CurrentUser currentUser,
+                                         Long scheduleId,
+                                         Long commentId, CommentUpdateRequest request) {
         // 1). 변환
-        User author=getUserOrThrow(userId);
         Schedule schedule=getScheduleOrThrow(scheduleId);
         Comment comment=getCommentOrThrow(commentId);
         // 2). equals
-        validateEachOther(schedule, author, comment);
+        validateEachOther(schedule, currentUser, comment);
         // 3). 실제 갱신
         comment.update(request.getContent());
         // 4). 저장.
@@ -79,13 +78,12 @@ public class CommentService {
         return commentMapper.toCommentResponse(comment);
     }
     @Transactional
-    public void deleteComment(Long userId, Long scheduleId, Long commentId) {
+    public void deleteComment(@AuthenticationPrincipal CurrentUser currentUser, Long scheduleId, Long commentId) {
         // 1). 변환
-        User author=getUserOrThrow(userId);
         Schedule schedule=getScheduleOrThrow(scheduleId);
         Comment comment=getCommentOrThrow(commentId);
         // 2). equals
-        validateEachOther(schedule, author, comment);
+        validateEachOther(schedule, currentUser, comment);
         // 3). 삭제
         commentRepository.delete(comment);
     }

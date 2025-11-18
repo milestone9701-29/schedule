@@ -5,7 +5,7 @@ import com.tr.schedule.domain.Schedule;
 
 import org.springframework.stereotype.Component;
 
-import java.util.List;
+// import java.util.List;
 
 @Component
 public class ScheduleMapper{
@@ -21,9 +21,9 @@ public class ScheduleMapper{
             schedule.getUpdatedAt()
         );
     }
-    public List<ScheduleResponse> toScheduleResponseList(List<Schedule> schedules) {
+    /* public List<ScheduleResponse> toScheduleResponseList(List<Schedule> schedules) {
         return schedules.stream()
             .map(this::toScheduleResponse)
             .toList();
-    }
+    } */
 }

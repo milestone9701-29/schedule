@@ -14,15 +14,13 @@ public record CurrentUser(
 ) {
     // CustomUserDetails -> CurrentUser
     public static CurrentUser from(CustomUserDetails principal) {
-        // 예외처리 : 서비스 동작단이라 따로 커스터마이징 해야할거 같은데
+        // 예외처리 : 따로 커스터마이징 해야할거 같은데
         if(principal==null) throw new NullPointerException("NPE"); // 403 처리 예정
 
-        // ENUM SET
+        // Collections.unmodifiableSet(EnumSet.copyOf())); : EnumSet 스냅샷 + 불변 뷰
         Set<Role> rolesCopy=principal.getRoles().isEmpty()
             ? Collections.emptySet()
             : Collections.unmodifiableSet(EnumSet.copyOf(principal.getRoles()));
-        // 스냅샷 불변 뷰 : 아니 잘하면서 왜 배운걸 적당적당히 넘기려 해. 이건 나도 안단말야.
-        // 근데 EnumSet으로 방어적 복사한다는 개념 자체를 모르니까 도움 받는건데
 
         return new CurrentUser(
             principal.getId(),
@@ -33,11 +31,11 @@ public record CurrentUser(
     }
 
     // 편의 메서드 : 0과 1로 권한 부여
-    // 이것도 배틀넷에서 대충 이런 식으로 권한 부여 한다는거 알고 있어서 깊게 가도 괜찮다 한건데
     public boolean hasRole(Role role){
         return roles!=null&&roles.contains(role);
     }
 
+    // Controller - Service 정리 중 권한 확인 시 사용 예정.
     public boolean hasAnyRoles(Set<Role> roles){
         if(roles==null||roles.isEmpty()) return false;
         for(Role role:roles){

@@ -26,10 +26,11 @@ public class CommentController {
     @PostMapping
     public ResponseEntity<CommentResponse> createComment(@AuthenticationPrincipal CustomUserDetails principal,
                                                          @PathVariable Long scheduleId,
-                                                         @Valid @RequestBody CommentCreateRequest request){
+                                                         @Valid @RequestBody CommentCreateRequest request,
+                                                         @RequestHeader(value="Comment-Idempotency-Key", required=false) String idempotencyKey){
         CurrentUser currentUser=CurrentUser.from(principal);
 
-        CommentResponse response=commentService.createComment(currentUser, scheduleId, request);
+        CommentResponse response=commentService.createComment(currentUser, scheduleId, request, idempotencyKey);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 

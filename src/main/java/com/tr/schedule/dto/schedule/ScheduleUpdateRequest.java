@@ -1,6 +1,7 @@
 package com.tr.schedule.dto.schedule;
 
 
+import jakarta.persistence.Version;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.AccessLevel;

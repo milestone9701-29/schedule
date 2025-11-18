@@ -1,6 +1,7 @@
 package com.tr.schedule.controller;
 
 
+import com.tr.schedule.common.security.CurrentUser;
 import com.tr.schedule.common.security.CustomUserDetails;
 import com.tr.schedule.dto.user.UserProfileResponse;
 import com.tr.schedule.service.UserService;
@@ -24,9 +25,9 @@ public class UserController {
 
     // 내 정보
     @GetMapping("/me")
-    public ResponseEntity<UserProfileResponse> getMyProfile(@AuthenticationPrincipal CustomUserDetails currentUser) {
-
-        return ResponseEntity.ok(userService.getProfile(currentUser.getId()));
+    public ResponseEntity<UserProfileResponse> getMyProfile(@AuthenticationPrincipal CustomUserDetails principal) {
+        CurrentUser currentUser= CurrentUser.from(principal);
+        return ResponseEntity.ok(userService.getProfile(currentUser.id()));
     }
 
     // 특정 유저 정보 조회 (관리자 or 공개범위)

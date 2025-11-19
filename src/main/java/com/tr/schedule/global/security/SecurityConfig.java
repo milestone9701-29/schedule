@@ -64,8 +64,7 @@ public class SecurityConfig {
             // hayAnyRole("권한명1", "권한명2") : 접근 권한
             .authorizeHttpRequests(auth->auth
                 // 인증 불필요 :  /api/auth/**, /h2-console/** 권한 허용(permitAll())
-                .requestMatchers("/api/auth/**", "/h2-console/**").permitAll()
-                .requestMatchers("/actuator/health").permitAll() // actuator 2025-11-18
+                .requestMatchers("/api/auth/**", "/h2-console/**", "/actuator/health").permitAll() // 2025-11-19
 
                 // ADMIN 전용 영역 :
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
@@ -94,8 +93,4 @@ public class SecurityConfig {
         return http.build();
     }
 }
-// passwordConfig에 pw encoder 있으니 생략.
-// "/api/auth/**", "/h2-console/**" : Authorization Bearer <token> 없을 경우, 401, 403
 
-// /api/admin** : 요청 시 -> JWT filter에서 ROLE_ADMIN이 있는 유저 통과.
-// /api/schedule GET : ROLE_USER 만 있어도 통과.

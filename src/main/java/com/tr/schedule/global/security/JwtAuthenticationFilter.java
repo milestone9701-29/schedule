@@ -38,10 +38,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter { // JSON WEB 
             if(jwtTokenProvider.validateToken(token)){
                 Long userId=jwtTokenProvider.getUserId(token);
 
-                // DB에서 실제 User를 조회 -> CustomUserDetails : 이건 왜 CustomerUserDetails가 아니라 부모에 넣은거지?
+                // DB에서 실제 User를 조회 -> Spring Security 기준 UserDetails interface으로 움직이므로,
+                // framework가 기대하는 abstract type에 맞춰 쓰는 것.
+                // instanceof CustomUserDetails.
                 UserDetails userDetails=customUserDetailsService.loadUserById(userId);
 
-                // 어떻게 구현체 이름이 유저이름비번인증토큰 ㅋㅋ
                 // Spring Security 표준 Authentication 구현체
                 // principal = userDetails
                 // credentials = null : PW 다시 비교 하지 않음.

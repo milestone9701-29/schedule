@@ -130,6 +130,11 @@ JWT
 (3). aud : 토큰 대상자. audience
 (4). exp : 만료시간. expiration. 현재 시간보다 이후로 설정되어야 한다.
 * NumericDate : 1480849147370 : (4),(5)
+- 초(second) 단위 : Unix time.
+- Java Date : ms 단위
+- JJWT 등의 라이브러리 : ms <-> second 변환
+
+
 (5). nbf : 토큰의 활성 날짜. Not Before. 이 날짜가 지나기 전까진 토큰이 처리되지 않는다.
 (6). iat : 토큰이 발급된 시간. issued at. 토큰의 age가 얼마나 되었는지 판단.
 (7). jti : JWT의 고유 식별자. 중복 처리 방지를 위함. 일회용 토큰에 사용하는 것이 대표 예시.
@@ -151,6 +156,9 @@ JWT
 9hYWFhYS5jb20vand0X2NsYWltcy9pc19hZG1pbiI6IHRydWUsCiAgICAidXNlcklkIjogIj
 ExMDI4MzczNzI1MTAyIiwKICAgICJ1c2VybmFtZSI6ICJKaW5zb28i
 * 사용 시 url-safe 유무 판단 : dA== : padding : 제거하는 것이 이롭다.
+- dA== : 일반 Base64 예시
+- JWT(Base64URL)토큰에서는 이미 라이브러리가 URL-safe 형식으로 만들기 때문에, 직접 패딩을 관리하지 않아도 괜찮다.
+예시 : + -> - , / -> _ , padding = 생략 등..
 
 3. 서명. Signature. : Header의 encode 값과 정보의 encode 값을 합친 후, 주어진 비밀키로 해싱하여 생성.
 * 의사코드 예시.

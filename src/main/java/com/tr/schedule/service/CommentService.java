@@ -67,7 +67,7 @@ public class CommentService {
         // 2). equals
         validateAccess(schedule, currentUser, comment);
         // 3). 실제 갱신
-        comment.update(request.getContent());
+        comment.update(request.getContent(), request.getVersion());
         // 4). 저장.
         // 5). 반환.
         return commentMapper.toCommentResponse(comment);

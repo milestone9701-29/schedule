@@ -13,6 +13,7 @@ public class ScheduleResponse {
     String ownerName;
     String title;
     String content;
+    Long version; // Lock.
     LocalDateTime createdAt;
     LocalDateTime updatedAt;
 

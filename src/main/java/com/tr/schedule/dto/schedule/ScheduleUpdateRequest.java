@@ -1,8 +1,8 @@
 package com.tr.schedule.dto.schedule;
 
 
-import jakarta.persistence.Version;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -16,10 +16,12 @@ public class ScheduleUpdateRequest {
     private String title;
     @NotBlank @Size(max=200)
     private String content;
+    @NotNull
     private Long version;
 
-    public ScheduleUpdateRequest(String title, String content) {
-        this.title = title;
-        this.content = content;
+    public ScheduleUpdateRequest(String title, String content, Long version){
+        this.title=title;
+        this.content=content;
+        this.version=version;
     }
 }

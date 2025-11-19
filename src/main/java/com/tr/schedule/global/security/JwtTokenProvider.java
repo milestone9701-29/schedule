@@ -18,40 +18,75 @@ import java.util.Date;
 
 import java.util.List;
 
+
+
 @Component
 public class JwtTokenProvider {
+    // application.yml - .properties
+    // jwt:
+    //  secret: "randoms3cretkey_example_aaaaaah1201931randoms3cretkey_example_aaaaaah1201931"
     @Value("${jwt.secret}")
-    private String secretKey;
+    private String secretKey; // HS256 : HMAC 비밀키 문자열.
+
     // 1시간
-    private final long ACCESS_TOKEN_VALIDITY_MS = 60*60*1000L; // 1ms 0.001초 : 분리 필요.
+    private final long ACCESS_TOKEN_VALIDITY_MS = 60*60*1000L; // 1ms 0.001초 : 분리 필요. : @Value("${jwt.access-token-validity-ms}");
+
     // token 생성
     public String generateToken(CustomUserDetails userDetails){
-        Date now=new Date();
-        Date expiry=new Date(now.getTime()+ACCESS_TOKEN_VALIDITY_MS);
+        Date now=new Date(); // 현재 시각.
+        Date expiry=new Date(now.getTime()+ACCESS_TOKEN_VALIDITY_MS); // 현재 + 1시간 뒤 만료.
 
-        List<String> roles=userDetails.getAuthorities().stream().map(GrantedAuthority::getAuthority).toList(); // ROLE_USER
+        /*
+        userDetails.getAuthorities() : Collection<? extends GrantedAuthority>
+        .map(GrantedAuthority::getAuthority) ROLE_USER, ROLE_ADMIN : ("ROLE_" + name)
+        */
+        List<String> roles=userDetails.getAuthorities().stream()
+            .map(GrantedAuthority::getAuthority)
+            .toList(); // ROLE_USER
 
-        return Jwts.builder() // set
-            .subject(userDetails.getId().toString()) // set
-            .claim("email", userDetails.getUsername()) // 클레임.
+        /* Builder Chain
+        .subject(userDetails.getId().toString()) : subject : UserId(toString()) : getUserId 등등..
+        .claim("email",userDetails.getUsername()) : CustomClaim : username(=이메일)
+        .claim("roles",roles) : 예시 : "roles", ["ROLE_USER", "ROLE_ADMIN"]
+        .issuedAt(now) : 발급된 시간 : 지금
+        .expiration(expiry) : 만료일 : 1시간
+        .signWith(getSigningKey()) : HS256 서명
+        .compact() : header.payload.signature 형태의 문자열(JWS)로 직렬화.
+         */
+
+        return Jwts.builder()
+            .subject(userDetails.getId().toString())
+            .claim("email", userDetails.getUsername())
             .claim("roles", roles)
-            .issuedAt(now) // set
-            .expiration(expiry) // set
-            .signWith(getSigningKey()) // Key에서 알고리즘 유추 : 구버전은 따로 설정해줘야 함.
+            .issuedAt(now)
+            .expiration(expiry)
+            .signWith(getSigningKey())
             .compact();
     }
+
+    /* secretKey 문자열 : UTF-8 : 한국어 유니코드.
+    Keys.hmacShaKeyFor(keyBytes); : 길이 32byte 이상.
+    내부적으로 SecretKey 만들어서 반환
+    -> signWith, verifyWith 양쪽에 사용. */
     private SecretKey getSigningKey(){
-        byte[] keyBytes=secretKey.getBytes(StandardCharsets.UTF_8); // kor
-        return Keys.hmacShaKeyFor(keyBytes); // HS256 : 32자 이상 : Hash Based Message Authentication Code
+        byte[] keyBytes=secretKey.getBytes(StandardCharsets.UTF_8);
+        return Keys.hmacShaKeyFor(keyBytes);
     }
 
-    // token에서 userId 추출
+    /*
+    parseClaims(token) : payload(claims)
+    -> claims.getSubject() : Subject : userId 문자열
+    -> Long.parseLong()으로 파싱 : userId(pk) 생성.
+     */
     public Long getUserId(String token){
-        Claims claims=parseClaims(token); // 파싱
-        return Long.parseLong(claims.getSubject()); // Long으로 파싱
+        Claims claims=parseClaims(token);
+        return Long.parseLong(claims.getSubject());
     }
 
-    public boolean validateToken(String token){ // 검증
+    /* validateToken
+    -> 1. 파싱 -> 1
+    -> 2. JwtException | IllegalArgumentException e : 0 */
+    public boolean validateToken(String token){
         try{
             parseClaims(token);
             return true;
@@ -60,6 +95,12 @@ public class JwtTokenProvider {
         }
     }
 
+    // JJWT ver 0.12
+    /*
+    .verifyWith(getSigningKey()) : 서명 검증
+    .parseSignedClaims(token) : 서명된 JWS 파싱
+    .getPayload(); : 적재 : payload -> Claims 객체 반환.
+    */
     public Claims parseClaims(String token){ // 파싱
         return Jwts.parser()
             .verifyWith(getSigningKey())
@@ -67,5 +108,64 @@ public class JwtTokenProvider {
             .parseSignedClaims(token)
             .getPayload();
     }
+    /*
+    예외 경우의 수
+    1. 서명 위조, 불일치
+    2. expired
+    3. 형식 깨짐.
+    */
 
 }
+/*
+JWT
+1. header :
+{
+  "typ": "JWT", : 토큰 타입
+  "alg": "HS256" : 해싱 알고리즘 지정.
+}
+2. Payload : registered, public, private claims(name, value의 한 쌍으로 구성)
+1). registered : optional : 이름이 이미 정해져있다.
+(1). iss : 토큰 발급자. issuer
+(2). sub : 토큰 제목. Subject
+(3). aud : 토큰 대상자. audience
+(4). exp : 만료시간. expiration. 현재 시간보다 이후로 설정되어야 한다.
+* NumericDate : 1480849147370 : (4),(5)
+(5). nbf : 토큰의 활성 날짜. Not Before. 이 날짜가 지나기 전까진 토큰이 처리되지 않는다.
+(6). iat : 토큰이 발급된 시간. issued at. 토큰의 age가 얼마나 되었는지 판단.
+(7). jti : JWT의 고유 식별자. 중복 처리 방지를 위함. 일회용 토큰에 사용하는 것이 대표 예시.
+
+2). public : Collision resistant : Claim name을 URI 형식으로 짓는 편.
+{
+    "https://aaaaa.com/jwt_claims/is_admin": true
+}
+3). private : Server - Client 협의 하에 사용하는 Claim name
+* 중복 충돌 주의.
+{
+    "iss": "aaaaa.com",
+    "exp": "1485270000000",
+    "https://aaaaa.com/jwt_claims/is_admin": true,
+    "userId": "11028373725102",
+    "username": "Jinsoo"
+}
+-> base64 : ICAgICJpc3MiOiAiYWFhYWEuY29tIiwKICAgICJleHAiOiAiMTQ4NTI3MDAwMDAwMCIsCiAgICAiaHR0cHM6Ly
+9hYWFhYS5jb20vand0X2NsYWltcy9pc19hZG1pbiI6IHRydWUsCiAgICAidXNlcklkIjogIj
+ExMDI4MzczNzI1MTAyIiwKICAgICJ1c2VybmFtZSI6ICJKaW5zb28i
+* 사용 시 url-safe 유무 판단 : dA== : padding : 제거하는 것이 이롭다.
+
+3. 서명. Signature. : Header의 encode 값과 정보의 encode 값을 합친 후, 주어진 비밀키로 해싱하여 생성.
+* 의사코드 예시.
+HMACSHA256(
+  base64UrlEncode(header) + "." +
+  base64UrlEncode(payload),
+  secret)
+
+헤더와 정보의 인코딩 값 사이에 . 을 넣어주고, 합치기 -> 비밀키의 값을 secret 으로 해싱을 하고 base64로 인코딩
+-> . 을 중간자로 다 합쳐주면, 하나의 토큰이 완성
+
+JWT.IO를 통한 검증.
+
+4. 결론
+Login 성공 -> CustomUserDetails : sub=id, email, roles, exp, iat 를 가진 HS256 토큰 발급.
+
+출처 : https://velopert.com/2389
+ */

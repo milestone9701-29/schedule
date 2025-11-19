@@ -14,17 +14,38 @@ public class CustomUserDetailsService implements UserDetailsService {
 
     private final UserRepository userRepository;
 
-    //로그인 -> 이메일로 조회
+    // 로그인 -> 이메일로 조회
+    // Security Filter -> AuthenticationManager -> DaoAuthenticationProvider : 계층 구분 하시라고.
+    // AuthenticationEntryPoint / AccessDeniedHandler
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException{
         User user = userRepository.findByEmail(email)
-            .orElseThrow(() -> new UsernameNotFoundException("Cannot find userId : " + email ));
+            .orElseThrow(() -> new UsernameNotFoundException("Invalid credentials")); // 시큐리티 전용 예외
         return new CustomUserDetails(user);
     }
+
+
     // JWT 안의 id로 조회하는 헬퍼.
     public UserDetails loadUserById(Long id) {
         User user = userRepository.findById(id)
-            .orElseThrow(()-> new UsernameNotFoundException("Cannot find userId :  " + id));
+            .orElseThrow(()-> new UsernameNotFoundException("Invalid credentials")); // 시큐리티 전용 예외
         return new CustomUserDetails(user);
     }
 }
+
+/*
+Authentication 실패
+loadUserByUsername(email) -> UserDetails
+-> 1. PW 비교 실패 -> BadCredentialsException
+-> 2. Cannot find user : UsernameNotFoundException
+--
+REST : HttpStatus.UNAUTHORIZED (401) + 에러 메시지
+FORM LOGIN : /login?error 로 redirect
+ */
+
+/*
+loadUserById(id) -> UserDetails
+UsernameNotFoundException : token이 있으나 가리키는 유저가 없는 경우 : 회원 탈퇴 등.
+-> 1. 401 처리
+-> 2. filter에서 catch -> SecurityContextHolder.clearContext() -> AuthenticationEntryPoint 호출.
+ */

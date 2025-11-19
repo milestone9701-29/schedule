@@ -30,7 +30,7 @@ public class CommentIdempotencyKey extends BaseTimeEntity{
 
     // 생성자
     @Builder(access=AccessLevel.PRIVATE)
-    private CommentIdempotencyKey(String key, Long userid, Long scheduleId, Long commentId){
+    private CommentIdempotencyKey(String key, Long userId, Long scheduleId, Long commentId){
         this.key=key;
         this.userId=userId;
         this.scheduleId=scheduleId;

@@ -2,6 +2,8 @@ package com.tr.schedule.domain;
 
 // @Version : Entity 수정 시 필드 값 자동 증가. : cnt++와 같이 우선순위 잡는데 쓰는 모양.
 
+import com.tr.schedule.global.exception.ErrorCode;
+import com.tr.schedule.global.exception.VersionErrorException;
 import jakarta.persistence.*;
 
 import lombok.AccessLevel;
@@ -49,7 +51,10 @@ public class Schedule extends BaseTimeEntity {
             .build();
     }
 
-    public void update(String title, String content){
+    public void update(String title, String content, Long expectedVersion){
+        if(!this.version.equals(expectedVersion)){
+            throw new VersionErrorException(ErrorCode.SCHEDULE_VERSION_CONFLICT);
+        }
         this.title = title;
         this.content = content;
     }

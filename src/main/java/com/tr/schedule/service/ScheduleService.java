@@ -71,14 +71,15 @@ public class ScheduleService {
     public ScheduleResponse updateSchedule(CurrentUser currentUser,
                                            Long scheduleId,
                                            ScheduleUpdateRequest request){
-        // 1). 변환
+        // 1). scheduleId 기반으로 조회
         Schedule schedule = getScheduleOrThrow(scheduleId);
-        // 2). equals
+        // 2). Authorization - 정합성 체크
         validateAccess(currentUser, schedule);
-        // 3). 실제 내용 수정
-        schedule.update(request.getTitle(), request.getContent());
-        // 4). 저장 : 트랜잭션을 쓰면 여기서 save 안 해도 됨(@Transactional),
-        // 5). 반환
+        // 3). Check Version : DB vs Client : schedule.update(a, b, request.getVersion()) -> if
+        // 4). 수정
+        schedule.update(request.getTitle(), request.getContent(), request.getVersion());
+        // 5). 저장 : 트랜잭션을 쓰면 여기서 save 안 해도 됨(@Transactional),
+        // 6). 반환
         return scheduleMapper.toScheduleResponse(schedule);
     }
 
@@ -150,5 +151,4 @@ public class ScheduleService {
         IdempotencyKey entity=IdempotencyKey.of(idempotencyKey, currentUser.id(), schedule.getId());
         idempotencyKeyRepository.save(entity);
     }
-
 }

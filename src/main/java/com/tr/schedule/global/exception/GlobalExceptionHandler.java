@@ -28,6 +28,7 @@ public class GlobalExceptionHandler {
 
     // OptimisticLockException.class, ObjectOptimisticLockingFailureException.class
     // 2025-11-18 11:04
+    // JPA/SpringData 예외 : Version 충돌 감지
     @ExceptionHandler({OptimisticLockException.class, ObjectOptimisticLockingFailureException.class})
     public ResponseEntity<ErrorResponse> handleOptimisticLock(Exception ex, HttpServletRequest request){
         // 일정, 댓글 : 삼항 조건 연산자로 Schedule - Comment 가르기

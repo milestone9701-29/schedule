@@ -1,6 +1,8 @@
 package com.tr.schedule.global.security;
 
 import com.tr.schedule.domain.Role;
+import com.tr.schedule.global.exception.BusinessAccessDeniedException;
+import com.tr.schedule.global.exception.ErrorCode;
 
 import java.util.Collections;
 import java.util.EnumSet;
@@ -14,8 +16,7 @@ public record CurrentUser(
 ) {
     // CustomUserDetails -> CurrentUser
     public static CurrentUser from(CustomUserDetails principal) {
-        // 예외처리 : 따로 커스터마이징 해야할거 같은데
-        if(principal==null) throw new NullPointerException("NPE"); // 403 처리 예정
+        if(principal==null) throw new BusinessAccessDeniedException(ErrorCode.USER_FORBIDDEN); // 403
 
         // Collections.unmodifiableSet(EnumSet.copyOf())); : EnumSet 스냅샷 + 불변 뷰
         Set<Role> rolesCopy=principal.getRoles().isEmpty()
@@ -30,19 +31,20 @@ public record CurrentUser(
         );
     }
 
-    // 편의 메서드 : 0과 1로 권한 부여
+    // 하나 : null 검사,
     public boolean hasRole(Role role){
         return roles!=null&&roles.contains(role);
     }
 
-    // Controller - Service 정리 중 권한 확인 시 사용 예정.
-    public boolean hasAnyRoles(Set<Role> roles){
-        if(roles==null||roles.isEmpty()) return false;
-        for(Role role:roles){
-            if(roles.contains(role)) return true;
+    // varargs : 여러 개 중 하나라도.
+    public boolean hasAnyRoles(Role... candidates){
+        if(roles==null||roles.isEmpty()||candidates==null||candidates.length==0) return false;
+        for(Role candidate:candidates){
+            if(roles.contains(candidate)) return true;
         }
         return false;
     }
+
     public boolean isUser(){ return hasRole(Role.USER); }
     public boolean isManager(){ return hasRole(Role.MANAGER); }
     public boolean isAdmin(){ return hasRole(Role.ADMIN); }

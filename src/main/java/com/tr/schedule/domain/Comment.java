@@ -2,6 +2,8 @@ package com.tr.schedule.domain;
 
 
 
+import com.tr.schedule.global.exception.ErrorCode;
+import com.tr.schedule.global.exception.VersionErrorException;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -37,9 +39,9 @@ public class Comment extends BaseTimeEntity {
     // 직접 작성 : schedule, author, content
     @Builder(access=AccessLevel.PRIVATE)
     private Comment(Schedule schedule, User author, String content) {
-        this.schedule = schedule;
-        this.author = author;
-        this.content = content;
+        this.schedule=schedule;
+        this.author=author;
+        this.content=content;
     }
 
     public static Comment of(Schedule schedule, User author, String content){
@@ -51,7 +53,10 @@ public class Comment extends BaseTimeEntity {
     }
 
     // 내용 수정.
-    public void update(String content){
+    public void update(String content, Long expectedVersion){
+        if(!this.version.equals(expectedVersion)){ // version 검사.
+            throw new VersionErrorException(ErrorCode.SCHEDULE_VERSION_CONFLICT);
+        }
         this.content = content;
     }
 }

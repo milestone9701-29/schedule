@@ -3,7 +3,6 @@ package com.tr.schedule.dto.schedule;
 import com.tr.schedule.domain.Schedule;
 
 
-import com.tr.schedule.domain.User;
 import org.springframework.stereotype.Component;
 
 // import java.util.List;
@@ -18,6 +17,7 @@ public class ScheduleMapper{
             schedule.getOwner().getUsername(),
             schedule.getTitle(),
             schedule.getContent(),
+            schedule.getVersion(),
             schedule.getCreatedAt(),
             schedule.getUpdatedAt()
         );

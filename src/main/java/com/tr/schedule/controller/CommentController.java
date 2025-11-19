@@ -1,8 +1,8 @@
 package com.tr.schedule.controller;
 
 
-import com.tr.schedule.common.security.CurrentUser;
-import com.tr.schedule.common.security.CustomUserDetails;
+import com.tr.schedule.global.security.CurrentUser;
+import com.tr.schedule.global.security.CustomUserDetails;
 import com.tr.schedule.dto.comment.CommentCreateRequest;
 
 import com.tr.schedule.dto.comment.CommentResponse;

@@ -1,4 +1,4 @@
-package com.tr.schedule.common.filter;
+package com.tr.schedule.global.filter;
 
 import io.jsonwebtoken.io.IOException;
 import jakarta.servlet.FilterChain;

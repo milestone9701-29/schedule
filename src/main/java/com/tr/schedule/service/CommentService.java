@@ -1,10 +1,10 @@
 package com.tr.schedule.service;
 
 
-import com.tr.schedule.common.exception.BusinessAccessDeniedException;
-import com.tr.schedule.common.exception.ErrorCode;
-import com.tr.schedule.common.exception.ResourceNotFoundException;
-import com.tr.schedule.common.security.CurrentUser;
+import com.tr.schedule.global.exception.BusinessAccessDeniedException;
+import com.tr.schedule.global.exception.ErrorCode;
+import com.tr.schedule.global.exception.ResourceNotFoundException;
+import com.tr.schedule.global.security.CurrentUser;
 import com.tr.schedule.domain.*;
 import com.tr.schedule.dto.comment.CommentCreateRequest;
 import com.tr.schedule.dto.comment.CommentResponse;
@@ -13,7 +13,6 @@ import com.tr.schedule.dto.comment.CommentUpdateRequest;
 import com.tr.schedule.repository.*;
 import jakarta.annotation.Nullable;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,43 +33,39 @@ public class CommentService {
     private final CommentMapper commentMapper;
     private final CommentIdempotencyKeyRepository commentIdempotencyKeyRepository;
 
+    // -- Service Method Lv.3 : CurrentUser + id + Req DTO + idempotencyKey -- //
     @Transactional
-    public CommentResponse createComment(@AuthenticationPrincipal CurrentUser currentUser,
+    public CommentResponse createComment(CurrentUser currentUser,
                                          Long scheduleId,
                                          CommentCreateRequest request,
-                                         @Nullable String idempotencyKey
+                                         @Nullable String commentIdempotencyKey
     ){
-        // 1). 멱등성 키가 있으면 조회
-        if(idempotencyKey!=null&&!idempotencyKey.isBlank()){
-            Optional<CommentIdempotencyKey> existing=commentIdempotencyKeyRepository.
-                findByKeyAndUserIdAndScheduleId(idempotencyKey, currentUser.id(), scheduleId);
-
-            if(existing.isPresent()){
-                Long commentId=existing.get().getCommentId();
-                Comment comment=getCommentOrThrow(commentId);
-                return commentMapper.toCommentResponse(comment);
+        // 1). 멱등성 키가 있으면 조회. 없으면 일반 POST처럼 동작.
+        if(hasIdempotencyKey(commentIdempotencyKey)){
+            Optional<CommentResponse> existing=findExistingCommentResponse(currentUser, scheduleId, commentIdempotencyKey);
+            if(existing.isPresent()){ // 있으면
+                return existing.get(); // 재사용
             }
         }
-        // 2). 변환
-        User author=getUserOrThrow(currentUser.id());
-        Schedule schedule=getScheduleOrThrow(scheduleId);
-        // 3). MapperClass
-        Comment comment=Comment.of(schedule, author, request.getContent());
-        // 4). 실제 저장
-        commentRepository.save(comment);
-        // 5). 반환.
+        // 2). 실제 스케쥴 생성(save)
+        Comment comment = createNewComment(scheduleId, currentUser, request);
+        // 3). 멱등성 키 저장
+        if(hasIdempotencyKey(commentIdempotencyKey)){
+            registerCommentIdempotencyKey(commentIdempotencyKey, currentUser, scheduleId, comment.getId());
+        }
+        // 4). 응답 반환
         return commentMapper.toCommentResponse(comment);
     }
 
     @Transactional
-    public CommentResponse updateComment(@AuthenticationPrincipal CurrentUser currentUser,
+    public CommentResponse updateComment(CurrentUser currentUser,
                                          Long scheduleId,
                                          Long commentId, CommentUpdateRequest request) {
         // 1). 변환
         Schedule schedule=getScheduleOrThrow(scheduleId);
         Comment comment=getCommentOrThrow(commentId);
         // 2). equals
-        validateEachOther(schedule, currentUser, comment);
+        validateAccess(schedule, currentUser, comment);
         // 3). 실제 갱신
         comment.update(request.getContent());
         // 4). 저장.
@@ -78,12 +73,12 @@ public class CommentService {
         return commentMapper.toCommentResponse(comment);
     }
     @Transactional
-    public void deleteComment(@AuthenticationPrincipal CurrentUser currentUser, Long scheduleId, Long commentId) {
+    public void deleteComment(CurrentUser currentUser, Long scheduleId, Long commentId) {
         // 1). 변환
         Schedule schedule=getScheduleOrThrow(scheduleId);
         Comment comment=getCommentOrThrow(commentId);
         // 2). equals
-        validateEachOther(schedule, currentUser, comment);
+        validateAccess(schedule, currentUser, comment);
         // 3). 삭제
         commentRepository.delete(comment);
     }
@@ -93,35 +88,62 @@ public class CommentService {
         return commentMapper.toCommentResponseList(saved);
     }
 
-    // 정리용 헬퍼 메서드
+    // -------------------------------------------- HELPER : Lv.2 -------------------------------------------- //
+    private Comment createNewComment(Long scheduleId, CurrentUser currentUser, CommentCreateRequest request){
+        User owner = getUserOrThrow(currentUser.id());
+        Schedule schedule =  getScheduleOrThrow(scheduleId);
+        Comment comment = Comment.of(schedule, owner, request.getContent());
+        return commentRepository.save(comment);
+    }
+    // -------------------------------------------- HELPER : Lv.1 -------------------------------------------- //
+    // -----------------  DB HELPER : currentUser.id() ----------------- //
     private User getUserOrThrow(Long userId){
         return userRepository.findById(userId)
-            .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.BAD_REQUEST));
+            .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.USER_NOT_FOUND));
     }
     private Schedule getScheduleOrThrow(Long scheduleId){
         return scheduleRepository.findById(scheduleId)
-            .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.BAD_REQUEST));
+            .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.SCHEDULE_NOT_FOUND));
     }
     private Comment getCommentOrThrow(Long commentId){
         return commentRepository.findById(commentId)
-            .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.BAD_REQUEST));
+            .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.COMMENT_NOT_FOUND));
     }
 
-    // 정합성..
-    private void validateEachOther(Schedule schedule, CurrentUser currentUser, Comment comment) {
+    // ----------------- Check Validation ----------------- //
+    // Authorization, 정합성.
+    private void validateAccess(Schedule schedule, CurrentUser currentUser, Comment comment) {
         // ADMIN, MANAGER : 같은 Schedule 안의 Comment이면, 누구의 것이든 수정 및 삭제가 가능.
         if (currentUser.isAdmin() || currentUser.isManager()) {
             if (!schedule.getId().equals(comment.getSchedule().getId())) {
-                throw new BusinessAccessDeniedException(ErrorCode.BAD_REQUEST);
+                throw new BusinessAccessDeniedException(ErrorCode.COMMENT_FORBIDDEN);
             }
             return;
         }
-        // USER : 본인 댓글 및 스케줄 일치 : 정합성을 위해 남겨둠.
-        if (!currentUser.id().equals(comment.getAuthor().getId())) { // 저자 체크
-            throw new BusinessAccessDeniedException(ErrorCode.BAD_REQUEST);
+
+        // 저자 체크
+        if (!currentUser.id().equals(comment.getAuthor().getId())) {
+            throw new BusinessAccessDeniedException(ErrorCode.COMMENT_FORBIDDEN);
         }
-        if (!schedule.getId().equals(comment.getSchedule().getId())) { // schedule 간의 id 체크
-            throw new BusinessAccessDeniedException(ErrorCode.BAD_REQUEST);
+        // schedule 간의 id 체크
+        if (!schedule.getId().equals(comment.getSchedule().getId())) {
+            throw new BusinessAccessDeniedException(ErrorCode.COMMENT_FORBIDDEN);
         }
+    }
+
+    // ----------------- IdempotencyKey ----------------- //
+    private boolean hasIdempotencyKey(@Nullable String idempotencyKey){ // 멱등키 체크 : null, 공백 검사
+        return idempotencyKey!=null&&!idempotencyKey.isBlank();
+    }
+    private Optional<CommentResponse> findExistingCommentResponse(CurrentUser currentUser, Long scheduleId, String commentIdempotencyKey){
+        return commentIdempotencyKeyRepository
+            .findByKeyAndUserIdAndScheduleId(commentIdempotencyKey, currentUser.id(), scheduleId) // Optional<CommentIdempotencyKey>
+            .map(CommentIdempotencyKey::getCommentId)  // key -> key.getCommentId(). : Optional<CommentIdempotencyKey> -> Optional<Long> : commentId
+            .map(this::getCommentOrThrow) // id -> this.getCommentOrThrow(id) : Optional<Long> -> Optional<Comment>
+            .map(commentMapper::toCommentResponse); // Optional<Comment> -> Optional<CommentResponse>
+    }
+    private void registerCommentIdempotencyKey(String commentIdempotencyKey, CurrentUser currentUser, Long scheduleId, Long commentId){
+        CommentIdempotencyKey entity=CommentIdempotencyKey.of(commentIdempotencyKey, currentUser.id(), scheduleId, commentId);
+        commentIdempotencyKeyRepository.save(entity);
     }
 }

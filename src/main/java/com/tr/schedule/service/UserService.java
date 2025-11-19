@@ -1,10 +1,9 @@
 package com.tr.schedule.service;
 
 
-import com.tr.schedule.common.exception.ErrorCode;
-import com.tr.schedule.common.exception.ResourceNotFoundException;
+import com.tr.schedule.global.exception.ErrorCode;
+import com.tr.schedule.global.exception.ResourceNotFoundException;
 
-import com.tr.schedule.common.security.CurrentUser;
 import com.tr.schedule.domain.User;
 import com.tr.schedule.dto.user.UserMapper;
 import com.tr.schedule.dto.user.UserProfileResponse;
@@ -12,7 +11,6 @@ import com.tr.schedule.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
 
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

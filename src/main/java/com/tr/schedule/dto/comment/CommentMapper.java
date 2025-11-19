@@ -8,10 +8,6 @@ import java.util.List;
 
 @Component
 public class CommentMapper{
-    /* public Comment toCommentEntity(User author, Schedule schedule, CommentCreateRequest request) {
-        return Comment.of(schedule, author, request.getContent());
-    } */
-
     // 응답 보내기
     public CommentResponse toCommentResponse(Comment comment){
         return new CommentResponse(

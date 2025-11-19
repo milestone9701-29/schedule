@@ -16,6 +16,7 @@ public class ScheduleUpdateRequest {
     private String title;
     @NotBlank @Size(max=200)
     private String content;
+    private Long version;
 
     public ScheduleUpdateRequest(String title, String content) {
         this.title = title;

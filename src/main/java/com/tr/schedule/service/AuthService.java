@@ -1,9 +1,9 @@
 package com.tr.schedule.service;
 
 
-import com.tr.schedule.common.exception.EmailMismatchException;
-import com.tr.schedule.common.exception.ErrorCode;
-import com.tr.schedule.common.exception.PasswordMismatchException;
+import com.tr.schedule.global.exception.EmailMismatchException;
+import com.tr.schedule.global.exception.ErrorCode;
+import com.tr.schedule.global.exception.PasswordMismatchException;
 import com.tr.schedule.domain.Role;
 import com.tr.schedule.domain.User;
 import com.tr.schedule.dto.auth.AuthMapper;

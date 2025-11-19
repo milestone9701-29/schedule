@@ -1,9 +1,16 @@
-package com.tr.schedule.common.exception;
+package com.tr.schedule.global.exception;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 
+/*
+400 = BAD_REQUEST = 요청이 이상함.
+401 = UNAUTHORIZED = 유효한 인증 자격 증명 없음.
+403 = FORBIDDEN = 너의 권한이 아님.
+404 = NOT_FOUND = 그런 리소스 없음.
+409 = CONFLICT = 버전/상태 충돌.
+*/
 @Getter
 @RequiredArgsConstructor
 public enum ErrorCode {
@@ -27,7 +34,11 @@ public enum ErrorCode {
     COMMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "CM404-01", "존재하지 않는 댓글입니다."),
     COMMENT_FORBIDDEN(HttpStatus.FORBIDDEN, "CM403-01", "해당 댓글에 접근할 수 없습니다."),
     COMMENT_LIMIT_EXCEEDED(HttpStatus.CONFLICT, "CM409-01", "댓글 허용 개수를 초과하였습니다."),
-    COMMENT_VERSION_CONFLICT(HttpStatus.CONFLICT, "CM409-02", "다른 요청에 의해 댓글이 먼저 수정되었습니다.");
+    COMMENT_VERSION_CONFLICT(HttpStatus.CONFLICT, "CM409-02", "다른 요청에 의해 댓글이 먼저 수정되었습니다."),
+
+    // User
+    USER_NOT_FOUND(HttpStatus.NOT_FOUND, "U404-01", "존재하지 않는 사용자입니다."),
+    USER_FORBIDDEN(HttpStatus.FORBIDDEN, "U403-01", "해당 사용자에 접근할 수 없습니다.");
 
 
 

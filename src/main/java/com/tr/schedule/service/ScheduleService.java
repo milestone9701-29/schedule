@@ -1,11 +1,11 @@
 package com.tr.schedule.service;
 
 
-import com.tr.schedule.common.exception.BusinessAccessDeniedException;
-import com.tr.schedule.common.exception.ErrorCode;
-import com.tr.schedule.common.exception.ResourceNotFoundException;
+import com.tr.schedule.global.exception.BusinessAccessDeniedException;
+import com.tr.schedule.global.exception.ErrorCode;
+import com.tr.schedule.global.exception.ResourceNotFoundException;
 
-import com.tr.schedule.common.security.CurrentUser;
+import com.tr.schedule.global.security.CurrentUser;
 import com.tr.schedule.domain.IdempotencyKey;
 import com.tr.schedule.domain.Schedule;
 import com.tr.schedule.domain.User;
@@ -18,7 +18,7 @@ import com.tr.schedule.repository.IdempotencyKeyRepository;
 import com.tr.schedule.repository.ScheduleRepository;
 import com.tr.schedule.repository.UserRepository;
 import jakarta.annotation.Nullable;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
+
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -44,47 +44,37 @@ public class ScheduleService {
     private final UserRepository userRepository;
     private final IdempotencyKeyRepository idempotencyKeyRepository;
 
+
+    // -- Service Method Lv.3 : CurrentUser + id + Req DTO + idempotencyKey -- //
     @Transactional
-    public ScheduleResponse createSchedule(@AuthenticationPrincipal CurrentUser currentUser,
+    public ScheduleResponse createSchedule(CurrentUser currentUser,
                                            ScheduleCreateRequest request,
                                            @Nullable String idempotencyKey){
-
-
-        // 1). 멱등성 키가 있으면 조회
-        if(idempotencyKey!=null&&!idempotencyKey.isBlank()){
-            Optional<IdempotencyKey> existing=idempotencyKeyRepository.findByKeyAndUserId(idempotencyKey, currentUser.id());
-
-            if(existing.isPresent()){
-                Long scheduleId=existing.get().getScheduleId();
-                Schedule schedule=getScheduleOrThrow(scheduleId);
-                return scheduleMapper.toScheduleResponse(schedule);
+        // 1). 멱등성 키가 있으면 조회. 없으면 일반 POST처럼 동작.
+        if(hasIdempotencyKey(idempotencyKey)){
+            Optional<ScheduleResponse> existing=findExistingScheduleResponse(currentUser, idempotencyKey);
+            if(existing.isPresent()){ // 있으면
+                return existing.get(); // 재사용
             }
         }
-
-        // 2). 실제 스케쥴 생성.
-        User owner = getUserOrThrow(currentUser.id());
-        Schedule schedule = Schedule.of(owner, request.getTitle(), request.getContent());
-        // create : save
-        scheduleRepository.save(schedule);
-
+        // 2). 실제 스케쥴 생성(save)
+        Schedule schedule = createNewSchedule(currentUser, request);
         // 3). 멱등성 키 저장
-        if(idempotencyKey!=null&&!idempotencyKey.isBlank()){
-            IdempotencyKey keyEntity = idempotencyKeyRepository.save(IdempotencyKey.of(idempotencyKey, currentUser.id(), schedule.getId()));
-            idempotencyKeyRepository.save(keyEntity);
+        if(hasIdempotencyKey(idempotencyKey)){
+            registerIdempotencyKey(idempotencyKey, currentUser, schedule);
         }
         // 4). 응답 반환
         return scheduleMapper.toScheduleResponse(schedule);
     }
 
     @Transactional
-    public ScheduleResponse updateSchedule(@AuthenticationPrincipal CurrentUser currentUser,
+    public ScheduleResponse updateSchedule(CurrentUser currentUser,
                                            Long scheduleId,
                                            ScheduleUpdateRequest request){
         // 1). 변환
         Schedule schedule = getScheduleOrThrow(scheduleId);
         // 2). equals
-        validateEachOther(currentUser, schedule);
-
+        validateAccess(currentUser, schedule);
         // 3). 실제 내용 수정
         schedule.update(request.getTitle(), request.getContent());
         // 4). 저장 : 트랜잭션을 쓰면 여기서 save 안 해도 됨(@Transactional),
@@ -93,17 +83,17 @@ public class ScheduleService {
     }
 
     @Transactional
-    public void deleteSchedule(@AuthenticationPrincipal CurrentUser currentUser, Long scheduleId){
+    public void deleteSchedule(CurrentUser currentUser, Long scheduleId){
         // 1). 변환
         Schedule schedule = getScheduleOrThrow(scheduleId);
         // 2). equals : 정리 예정
-        validateEachOther(currentUser, schedule);
+        validateAccess(currentUser, schedule);
         // 3). 실제 내용 : 삭제
         scheduleRepository.delete(schedule);
     }
 
     @Transactional(readOnly=true)
-    public Page<ScheduleResponse> listUserSchedules(@AuthenticationPrincipal CurrentUser currentUser, Pageable pageable){
+    public Page<ScheduleResponse> listUserSchedules(CurrentUser currentUser, Pageable pageable){
         // 1). 변환 : owner
         User owner = getUserOrThrow(currentUser.id());
         // 2). 실제 내용.
@@ -118,23 +108,47 @@ public class ScheduleService {
         return page.map(scheduleMapper::toScheduleResponse);
     }
 
-
-    // 정리용 헬퍼 메서드.
+    // -------------------------------------------- HELPER : Lv.2 -------------------------------------------- //
+    private Schedule createNewSchedule(CurrentUser currentUser, ScheduleCreateRequest request){
+        User owner = getUserOrThrow(currentUser.id());
+        Schedule schedule = Schedule.of(owner, request.getTitle(), request.getContent());
+        return scheduleRepository.save(schedule);
+    }
+    // -------------------------------------------- HELPER : Lv.1 -------------------------------------------- //
+    // -----------------  DB HELPER : currentUser.id() ----------------- //
     private User getUserOrThrow(Long userId){
         return userRepository.findById(userId)
-            .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.SCHEDULE_NOT_FOUND));
+            .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.USER_NOT_FOUND));
     }
     private Schedule getScheduleOrThrow(Long scheduleId){
         return scheduleRepository.findById(scheduleId)
             .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.SCHEDULE_NOT_FOUND));
     }
-    private void validateEachOther(CurrentUser currentUser, Schedule schedule){
+
+    // ----------------- Check Validation ----------------- //
+    // Authorization, 정합성.
+    private void validateAccess(CurrentUser currentUser, Schedule schedule){
         // ADMIN, MANAGER : 타인의 일정
         // User Entity로 권한 꺼내는 방법 : if(user.getRoles().contains(Role.ADMIN) || user.getRoles().contains(Role.MANAGER)){ return; }
-        // Authorization, 정합성.
         if(currentUser.isAdmin()||currentUser.isManager()){ return; }
-
         // User : Owner 일치 시에만 허용.
-        if (!currentUser.id().equals(schedule.getOwner().getId())) { throw new BusinessAccessDeniedException(ErrorCode.SCHEDULE_FORBIDDEN); }
+        if (!currentUser.id().equals(schedule.getOwner().getId())) { throw new BusinessAccessDeniedException(ErrorCode.USER_FORBIDDEN); }
     }
+
+    // ----------------- IdempotencyKey ----------------- //
+    private boolean hasIdempotencyKey(@Nullable String idempotencyKey){ // 멱등키 체크 : null, 공백 검사
+        return idempotencyKey!=null&&!idempotencyKey.isBlank();
+    }
+    private Optional<ScheduleResponse> findExistingScheduleResponse(CurrentUser currentUser, String idempotencyKey){
+        return idempotencyKeyRepository
+            .findByKeyAndUserId(idempotencyKey, currentUser.id()) // 값이 있으면 그 안의 값을 변환, 없으면 Optional.empty() 유지
+            .map(IdempotencyKey::getScheduleId) // key -> key.getScheduleId(). : Optional<IdempotencyKey> -> Optional<Long>
+            .map(this::getScheduleOrThrow) // id->this.getScheduleOrThrow(id) : Optional<Long> -> Optional<Schedule>
+            .map(scheduleMapper::toScheduleResponse); // Optional<Schedule> -> Optional<ScheduleResponse>
+    }
+    private void registerIdempotencyKey(String idempotencyKey, CurrentUser currentUser, Schedule schedule){
+        IdempotencyKey entity=IdempotencyKey.of(idempotencyKey, currentUser.id(), schedule.getId());
+        idempotencyKeyRepository.save(entity);
+    }
+
 }

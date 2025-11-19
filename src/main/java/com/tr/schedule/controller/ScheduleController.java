@@ -1,7 +1,7 @@
 package com.tr.schedule.controller;
 
-import com.tr.schedule.common.security.CurrentUser;
-import com.tr.schedule.common.security.CustomUserDetails;
+import com.tr.schedule.global.security.CurrentUser;
+import com.tr.schedule.global.security.CustomUserDetails;
 import com.tr.schedule.dto.schedule.ScheduleCreateRequest;
 import com.tr.schedule.dto.schedule.ScheduleResponse;
 import com.tr.schedule.dto.schedule.ScheduleUpdateRequest;

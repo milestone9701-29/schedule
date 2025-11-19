@@ -1,9 +1,8 @@
-package com.tr.schedule.common.exception;
+package com.tr.schedule.global.exception;
 
 import jakarta.persistence.OptimisticLockException;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
 import org.springframework.orm.ObjectOptimisticLockingFailureException;

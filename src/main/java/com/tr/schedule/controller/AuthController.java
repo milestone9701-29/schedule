@@ -1,9 +1,9 @@
 package com.tr.schedule.controller;
 
 
-import com.tr.schedule.common.security.CustomUserDetails;
+import com.tr.schedule.global.security.CustomUserDetails;
 // import com.tr.schedule.common.security.JwtAuthenticationFilter;
-import com.tr.schedule.common.security.JwtTokenProvider;
+import com.tr.schedule.global.security.JwtTokenProvider;
 import com.tr.schedule.domain.User;
 import com.tr.schedule.dto.auth.*;
 import com.tr.schedule.service.AuthService;

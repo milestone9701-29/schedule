@@ -1,4 +1,4 @@
-package com.tr.schedule.common.exception;
+package com.tr.schedule.global.exception;
 
 public class CommentLimitExceededException extends BusinessException {
     public CommentLimitExceededException(ErrorCode errorCode) {

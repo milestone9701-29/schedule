@@ -1,4 +1,4 @@
-package com.tr.schedule.common.security;
+package com.tr.schedule.global.security;
 
 
 import jakarta.servlet.http.HttpServletResponse;

@@ -1,4 +1,4 @@
-package com.tr.schedule.common.security;
+package com.tr.schedule.global.security;
 
 import com.tr.schedule.domain.User;
 import com.tr.schedule.repository.UserRepository;

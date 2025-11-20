@@ -16,19 +16,20 @@ import org.springframework.http.HttpStatus;
 public enum ErrorCode {
 
     // Common
-    BAD_REQUEST(HttpStatus.BAD_REQUEST, "C400-00", "잘못된 요청입니다."),
+    BAD_REQUEST(HttpStatus.BAD_REQUEST, "C400-01", "잘못된 요청입니다."),
     VALIDATION_ERROR(HttpStatus.BAD_REQUEST, "C400-01", "요청 데이터가 유효하지 않습니다."),
-    INTERNAL_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "C500-00", "알 수 없는 오류입니다."),
-    VERSION_CONFLICT(HttpStatus.CONFLICT, "C409-00", "다른 요청에 의해 먼저 수정되었습니다."),
+    INTERNAL_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "C500-01", "알 수 없는 오류입니다."),
+    VERSION_CONFLICT(HttpStatus.CONFLICT, "C409-01", "다른 요청에 의해 먼저 수정되었습니다."),
 
     // JWT
     JWT_EXPIRED(HttpStatus.UNAUTHORIZED, "JWT_401_EXPIRED", "token이 만료되었습니다."),
     JWT_INVALID(HttpStatus.UNAUTHORIZED, "JWT_401_INVALID", "유효하지 않은 token입니다."),
 
     // Auth
-    AUTH_INVALID_PASSWORD(HttpStatus.UNAUTHORIZED, "A401-01", "Password가 올바르지 않습니다."),
-    AUTH_INVALID_EMAIL(HttpStatus.UNAUTHORIZED, "A401-02", "Email이 올바르지 않습니다."),
-    AUTH_TOKEN_EXPIRED(HttpStatus.UNAUTHORIZED, "A401-03", "Token이 만료되었습니다."),
+    AUTH_EMAIL_ALREADY_EXISTS(HttpStatus.CONFLICT, "A409-01", "이미 사용 중인 Email입니다."),
+    AUTH_EMAIL_FORMAT_INVALID(HttpStatus.BAD_REQUEST, "A400-01", "Email 형식이 올바르지 않습니다"),
+    AUTH_INVALID_CREDENTIALS(HttpStatus.UNAUTHORIZED, "A401-01", "Email 또는 Password가 올바르지 않습니다."),
+    AUTH_TOKEN_EXPIRED(HttpStatus.UNAUTHORIZED, "A401-01", "Token이 만료되었습니다."),
 
     // Schedule
     SCHEDULE_NOT_FOUND(HttpStatus.NOT_FOUND, "S404-01", "존재하지 않는 일정입니다."),

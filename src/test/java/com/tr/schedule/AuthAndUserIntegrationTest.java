@@ -2,9 +2,13 @@ package com.tr.schedule;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.tr.schedule.domain.User;
 import com.tr.schedule.dto.auth.SignupRequest;
 import com.tr.schedule.dto.auth.LoginRequest;
 import com.tr.schedule.dto.schedule.ScheduleCreateRequest;
+import com.tr.schedule.repository.ScheduleRepository;
+import com.tr.schedule.repository.UserRepository;
+import com.tr.schedule.service.ScheduleService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -25,6 +29,15 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 public class AuthAndUserIntegrationTest {
     @Autowired
     MockMvc mockMvc;
+
+    @Autowired
+    UserRepository userRepository;
+
+    @Autowired
+    ScheduleRepository scheduleRepository;
+
+    @Autowired
+    ScheduleService scheduleService;
 
     @Autowired
     ObjectMapper objectMapper;
@@ -53,7 +66,7 @@ public class AuthAndUserIntegrationTest {
             "password00"
         );
 
-        // Parsing
+        // Parsing : String
         String loginResponseBody = mockMvc.perform(post("/api/auth/login")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(loginRequest)))
@@ -71,50 +84,61 @@ public class AuthAndUserIntegrationTest {
     // login success
     @Test
     void login_success_returnsTokenAndUserInfo() throws Exception{
-        // given
+        // SignUp
         SignupRequest signupRequest = new SignupRequest(
-            "login-success@example.com",
-            "login-user",
-            "pass1234"
+            "testplayer00@alwayssleepy.kr",
+            "test_player",
+            "password00"
         );
 
+        // post
+        // JACKSON
+        // objectMapper.writeValueAsString(req) : 문자열로 파싱
+        // status
         mockMvc.perform(post("/api/auth/signup")
             .contentType(MediaType.APPLICATION_JSON)
             .content(objectMapper.writeValueAsString(signupRequest)))
             .andExpect(status().isCreated()); // 201
 
+
         LoginRequest loginRequest = new LoginRequest(
-            "login-success@example.com",
-            "pass1234"
+            "testplayer00@alwayssleepy.kr",
+            "password00"
         );
 
-        // when and then
+        // post
+        // JACKSON
+        // objectMapper.writeValueAsString(req) : 문자열로 파싱
+        // status
+        // token이 존재하는지?
+        // $.user.email : value(예상 기댓값)
         mockMvc.perform(post("/api/auth/login")
             .contentType(MediaType.APPLICATION_JSON)
             .content(objectMapper.writeValueAsString(loginRequest)))
-            .andExpect(status().isOk()) // 201
+            .andExpect(status().isOk()) // 200
             .andExpect(jsonPath("$.token").exists())
-            .andExpect(jsonPath("$.user.email").value("login-success@example.com"));
+            .andExpect(jsonPath("$.user.email").value("testplayer00@alwayssleepy.kr"));
     }
 
     // login failed
     @Test
     void login_withWrongPassword_returnsError() throws Exception{
-        // given : 정상 회원 가입
+        // 정상적인 회원가입
         SignupRequest signupRequest = new SignupRequest(
             "login-fail@example.com",
             "login-fail",
-            "pass1234"
+            "pass1111"
         );
 
         mockMvc.perform(post("/api/auth/signup")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(signupRequest)))
-            .andExpect(status().isCreated()); // 200
+            .andExpect(status().isCreated()); // 201
 
+        // 로그인 실패
         LoginRequest loginRequest = new LoginRequest(
             "login-fail@example.com",
-            "wrong-pass"
+            "wrong-pass9900"
         );
 
         mockMvc.perform(post("/api/auth/login")
@@ -128,37 +152,64 @@ public class AuthAndUserIntegrationTest {
 
     // Profile - Valid
     @Test
-    void getMyProfile_withValidToken_returnsMyInfo() throws Exception{
-            // given : 기본 유저 회원가입 + 로그인해서 토큰 확보
-            String token = signUpAndLoginDefaultUser();
+    void getMyProfile_withValidToken_returnsMyInfo() throws Exception {
+        // given: 회원 하나 만들고, 로그인해서 JWT 토큰 뽑기
+        User user = userRepository.save(User.builder()
+            .username("testuser")
+            .email("testplayer00@alwayssleepy.kr")
+            .password(passwordEncoder.encode("password1234!"))
+            .build()
+        );
 
+        LoginRequest loginRequest = new LoginRequest(
+            user.getEmail(),
+            "password1234!"
+        );
 
+        // 로그인 요청 → 응답 JSON에서 token 추출
+        String loginResponseBody = mockMvc.perform(post("/api/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(loginRequest)))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.token").exists())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
 
-            // when & then
-            mockMvc.perform(get("/api/users/me")
-                    .header("Authorization", "Bearer " + token))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.email").value("test@example.com"))
-                .andExpect(jsonPath("$.username").value("tester"));
-            // UserProfileResponse 필드명에 맞게 수정
+        JsonNode root = objectMapper.readTree(loginResponseBody);
+        String accessToken = root.get("token").asText();
 
+        // when & then: /api/users/me 호출 → UserProfileResponse 구조 검증
+        mockMvc.perform(get("/api/users/me")
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken))
+            .andExpect(status().isOk())
+            // UserMapper.toUserProfileResponse(User user) 기준 검증
+            .andExpect(jsonPath("$.id").value(user.getId()))
+            .andExpect(jsonPath("$.username").value(user.getUsername()))
+            .andExpect(jsonPath("$.email").value(user.getEmail()))
+            .andExpect(jsonPath("$.createdAt").exists());
     }
 
-    // Profile - unauthorized
+    // Profile - unauthorized : ErrorResponse
     @Test
     void getMyProfile_withoutToken_returnsUnauthorized() throws Exception {
-        mockMvc.perform(get("/api/users/me"))
-            .andExpect(status().isUnauthorized())
-                .andExpect(jsonPath("$.code").value("AUTH_INVALID_PASSWORD"))
+
+        String token = signUpAndLoginDefaultUser();
+
+        mockMvc.perform(get("/api/users/me")
+                .header("Authorization", "Bearer " + token))
+            .andExpect(status().isUnauthorized()) // 401
+                .andExpect(jsonPath("$.code").value(""))
             .andExpect(jsonPath("$.message").isNotEmpty())
-            .andExpect(jsonPath("$.path").value("/api/users/me")); // Security 설정에 따라 401/403 맞춰 수정
+            .andExpect(jsonPath("$.path").value("/api/users/me"));
 
     }
 
+    // createSchedule - IsCreated()
     @Test
     void createSchedule_withValidToken_returnsCreatedSchedule() throws Exception{
-        // given 기본 유저로 회원가입, 로그인
-         String token=signUpAndLoginDefaultUser();
+        // 토큰 들고오기
+        String token=signUpAndLoginDefaultUser();
          // DTO
         ScheduleCreateRequest request = new ScheduleCreateRequest(
             "테스트 일정", // title
@@ -172,7 +223,6 @@ public class AuthAndUserIntegrationTest {
              .andExpect(status().isCreated()) // 201
              .andExpect(jsonPath("$.title").value("테스트 일정"))
              .andExpect(jsonPath("$.content").value("테스트 내용"));
-         // 응답 구조에 따라 ownerId, createdAt 등도 확인할 것.
      }
 
     @Test
@@ -185,7 +235,7 @@ public class AuthAndUserIntegrationTest {
         mockMvc.perform(post("/api/schedules")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
-            .andExpect(status().isUnauthorized())
+            .andExpect(status().isUnauthorized()) // 401
             .andExpect(jsonPath("$.code").value("AUTH_INVALID_PASSWORD"))
             .andExpect(jsonPath("$.path").value("/api/schedules"));
     }
@@ -200,7 +250,7 @@ public class AuthAndUserIntegrationTest {
 
         mockMvc.perform(get("/api/schedules/me")
                 .header("Authorization", "Bearer " + token))
-            .andExpect(status().isOk())
+            .andExpect(status().isOk()) // 200
             .andExpect(jsonPath("$.content.length()").value(2));
         // 응답이 List인지, page 래퍼인지에 따라 .andExpect(jsonPath("$.content", hasSize(2))); 등.
     }
@@ -208,9 +258,10 @@ public class AuthAndUserIntegrationTest {
     @Test
     void request_withInvalidToken_returnsJwtInvalidError() throws Exception{
         String invalidToken="this.is.not.jwt";
+
         mockMvc.perform(get("/api/schedules/me")
             .header("Authorization","Bearer " + invalidToken))
-            .andExpect(status().isUnauthorized())
+            .andExpect(status().isUnauthorized()) // 401
             .andExpect(jsonPath("$.code").value("JWT_401_INVALID"))
             .andExpect(jsonPath("$.message").isNotEmpty());
     }
@@ -221,7 +272,7 @@ public class AuthAndUserIntegrationTest {
         String token = signUpAndLoginDefaultUser();
         mockMvc.perform(get("/api/admin/some-endpoint")
             .header("Authorization", "Bearer " + token))
-            .andExpect(status().isForbidden())
+            .andExpect(status().isForbidden()) // 403
             .andExpect(jsonPath("$.code").value("AUTH_INVALID_PASSWORD"))
             .andExpect(jsonPath("$.message").isNotEmpty());
     }
@@ -243,3 +294,5 @@ public class AuthAndUserIntegrationTest {
 
 
 }
+// 1. Request Value -> Response
+// 2. 이미 싱성한 토큰 갖고 접근하는 경우. : createSchedule

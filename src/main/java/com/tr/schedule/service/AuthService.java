@@ -35,7 +35,7 @@ public class AuthService {
     public User signUp(SignupRequest request){
         // 1). EMAIL 중복 체크
         if(existsByEmail(request)){ // 검사
-            throw new BusinessException(ErrorCode.AUTH_INVALID_EMAIL);
+            throw new BusinessException(ErrorCode.AUTH_EMAIL_ALREADY_EXISTS);
         }
         // 2). PasswordEncoder로 인코딩
         String encodedPassword=passwordEncoder.encode(request.getPassword());
@@ -54,7 +54,7 @@ public class AuthService {
         User user= findUserByEmailOrThrow(request);
         // 2). Password 검증
         if(!matchesPassword(request, user)){ // matches로 검증
-            throw new PasswordMismatchException(ErrorCode.AUTH_INVALID_PASSWORD);
+            throw new PasswordMismatchException(ErrorCode.AUTH_INVALID_CREDENTIALS);
         }
         // 3). 토큰 발급은
         return user;

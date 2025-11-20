@@ -13,7 +13,7 @@ import lombok.*;
     name="idempotency_Keys",
     uniqueConstraints=@UniqueConstraint(
         name="uk_idempotency_keys_key_user",
-        columnNames={"key","user_id"}
+        columnNames={"user_id", "idempotency_Key"}
     )
 )
 public class IdempotencyKey extends BaseTimeEntity{
@@ -21,8 +21,8 @@ public class IdempotencyKey extends BaseTimeEntity{
     @GeneratedValue(strategy= GenerationType.IDENTITY)
     private Long id;
     // Key Column : unique=true -> 서비스 전체에서 이 문자열은 한 번만 사용
-    @Column(nullable=false, length=64) // key length() 64
-    private String key;
+    @Column(name="idempotency_key", nullable=false, length=64) // key length() 64
+    private String idempotencyKey;
     @Column(nullable=false, name="user_id")
     private Long userId;
     @Column(nullable=false, name="schedule_id")
@@ -30,8 +30,8 @@ public class IdempotencyKey extends BaseTimeEntity{
 
     // 생성자
     @Builder(access=AccessLevel.PRIVATE)
-    private IdempotencyKey(String key, Long userId, Long scheduleId){
-        this.key=key;
+    private IdempotencyKey(String idempotencyKey, Long userId, Long scheduleId){
+        this.idempotencyKey=idempotencyKey;
         this.userId=userId;
         this.scheduleId=scheduleId;
     }

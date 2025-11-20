@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 @Table(
     name="comment_idempotency_keys",
     uniqueConstraints=@UniqueConstraint(name="uk_comment_idempotency_key",
-    columnNames={"key","user_id","schedule_id"}
+        columnNames={"user_id", "schedule_id", "idempotency_key"}
     )
 )
 @Getter
@@ -20,7 +20,7 @@ public class CommentIdempotencyKey extends BaseTimeEntity{
     @Id @GeneratedValue(strategy= GenerationType.IDENTITY)
     private Long id;
     @Column(nullable=false, length=64) // key length() 64
-    private String key;
+    private String idempotencyKey;
     @Column(name="user_id", nullable=false)
     private Long userId;
     @Column(name="schedule_id", nullable=false)
@@ -30,14 +30,14 @@ public class CommentIdempotencyKey extends BaseTimeEntity{
 
     // 생성자
     @Builder(access=AccessLevel.PRIVATE)
-    private CommentIdempotencyKey(String key, Long userId, Long scheduleId, Long commentId){
-        this.key=key;
+    private CommentIdempotencyKey(String idempotencyKey, Long userId, Long scheduleId, Long commentId){
+        this.idempotencyKey=idempotencyKey;
         this.userId=userId;
         this.scheduleId=scheduleId;
         this.commentId=commentId;
     }
 
-    public static CommentIdempotencyKey of(String key, Long userId, Long scheduleId, Long commentId){
-        return new CommentIdempotencyKey(key, userId, scheduleId, commentId);
+    public static CommentIdempotencyKey of(String idempotencyKey, Long userId, Long scheduleId, Long commentId){
+        return new CommentIdempotencyKey(idempotencyKey, userId, scheduleId, commentId);
     }
 }

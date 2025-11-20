@@ -49,11 +49,12 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable())
             .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
-            // Security 단계에서의 예외     처리.
+            // Security 단계에서의 예외 처리.
             // 문제 : response.sendError(status)로 상태 코드만 제시
             // -> ErrorResponse + ErrorCode를 Security 단계 또한 통일
             .exceptionHandling(ex -> ex
-                // 미인증(토큰 없음, 깨짐) -> authenticationEntryPoint -> 401
+                    // jwtAuthenticationEntryPoint implements AuthenticationEntryPoint
+                    // ->  미인증(토큰 없음, 깨짐) -> authenticationEntryPoint -> 401
                 .authenticationEntryPoint(jwtAuthenticationEntryPoint)
                 // 인증은 됐으나, 권한 부족 -> accessDeniedHandler -> 403
                 .accessDeniedHandler(jwtAccessDeniedHandler)
@@ -65,7 +66,7 @@ public class SecurityConfig {
                 // 인증 불필요 :  /api/auth/**, /h2-console/** 권한 허용(permitAll())
                 .requestMatchers("/api/auth/**", "/h2-console/**", "/actuator/health").permitAll() // 2025-11-19
 
-                // ADMIN 전용 영역 :
+                // ADMIN 전용 영역 : 추가 필요.
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
 
                 // MANAGER, ADMIN,  공통 관리 영역("/api/manage/**") : 구현 중.

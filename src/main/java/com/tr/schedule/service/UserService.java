@@ -30,9 +30,9 @@ public class UserService{
         return userMapper.toUserProfileResponse(user);
     }
 
-    // 정리용 헬퍼 메서드
+    // 404
     private User getUserOrThrow(Long userId){
         return userRepository.findById(userId)
-            .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.SCHEDULE_FORBIDDEN));
+            .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.USER_NOT_FOUND));
     }
 }

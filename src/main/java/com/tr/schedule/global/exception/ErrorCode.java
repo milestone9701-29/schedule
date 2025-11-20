@@ -14,7 +14,13 @@ import org.springframework.http.HttpStatus;
 @Getter
 @RequiredArgsConstructor
 public enum ErrorCode {
-    // 공통
+
+    // Common
+    BAD_REQUEST(HttpStatus.BAD_REQUEST, "C400-00", "잘못된 요청입니다."),
+    VALIDATION_ERROR(HttpStatus.BAD_REQUEST, "C400-01", "요청 데이터가 유효하지 않습니다."),
+    INTERNAL_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "C500-00", "알 수 없는 오류입니다."),
+    VERSION_CONFLICT(HttpStatus.CONFLICT, "C409-00", "다른 요청에 의해 먼저 수정되었습니다."),
+
     // JWT
     JWT_EXPIRED(HttpStatus.UNAUTHORIZED, "JWT_401_EXPIRED", "token이 만료되었습니다."),
     JWT_INVALID(HttpStatus.UNAUTHORIZED, "JWT_401_INVALID", "유효하지 않은 token입니다."),
@@ -24,15 +30,11 @@ public enum ErrorCode {
     AUTH_INVALID_EMAIL(HttpStatus.UNAUTHORIZED, "A401-02", "Email이 올바르지 않습니다."),
     AUTH_TOKEN_EXPIRED(HttpStatus.UNAUTHORIZED, "A401-03", "Token이 만료되었습니다."),
 
-    // HttpStatus.BAD_REQUEST.value()
-    BAD_REQUEST(HttpStatus.BAD_REQUEST, "C400", "잘못된 요청입니다."),
-    INTERNAL_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "C500", "알 수 없는 오류입니다."),
-
     // Schedule
     SCHEDULE_NOT_FOUND(HttpStatus.NOT_FOUND, "S404-01", "존재하지 않는 일정입니다."),
     SCHEDULE_FORBIDDEN(HttpStatus.FORBIDDEN, "S403-01", "해당 일정에 접근할 수 없습니다."),
     SCHEDULE_LIMIT_EXCEEDED(HttpStatus.CONFLICT, "S409-01", "댓글 허용 개수를 초과하였습니다."),
-    SCHEDULE_VERSION_CONFLICT(HttpStatus.CONFLICT, "S409-02", "다른 요청에 의해 일정이 먼저 수정되었습니다."), // 우선순위 개념.
+    SCHEDULE_VERSION_CONFLICT(HttpStatus.CONFLICT, "S409-02", "다른 요청에 의해 일정이 먼저 수정되었습니다."),
 
     // Comment
     COMMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "CM404-01", "존재하지 않는 댓글입니다."),
@@ -44,10 +46,7 @@ public enum ErrorCode {
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "U404-01", "존재하지 않는 사용자입니다."),
     USER_FORBIDDEN(HttpStatus.FORBIDDEN, "U403-01", "해당 사용자에 접근할 수 없습니다.");
 
-
-
     private final HttpStatus status;
     private final String code;
     private final String defaultMessage;
-
 }

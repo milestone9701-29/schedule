@@ -11,61 +11,62 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 
+// Stack Trace : 예외 발생 과정에서 호출된 메서드들의 순서와 위치 정보를 나타내는 것.
+
 @Slf4j // logger
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    // 1). Business 예외.
     @ExceptionHandler(BusinessException.class)
     public ResponseEntity<ErrorResponse> handleBusiness(BusinessException ex, HttpServletRequest request) {
-        ErrorCode errorCode = ex.getErrorCode();
-        ErrorResponse errorResponse = new ErrorResponse(
-            errorCode.getCode(),
-            ex.getMessage(),
-            request.getRequestURI()
-        );
-        return ResponseEntity.status(errorCode.getStatus()).body(errorResponse);
+        ErrorCode errorCode=ex.getErrorCode();
+        ErrorResponse body=ErrorResponse.of(errorCode, request.getRequestURI());
+        return ResponseEntity.status(errorCode.getStatus()).body(body);
     }
 
     // OptimisticLockException.class, ObjectOptimisticLockingFailureException.class
     // 2025-11-18 11:04
-    // JPA/SpringData 예외 : Version 충돌 감지
+    // JPA/SpringData 예외
     @ExceptionHandler({OptimisticLockException.class, ObjectOptimisticLockingFailureException.class})
-    public ResponseEntity<ErrorResponse> handleOptimisticLock(Exception ex, HttpServletRequest request){
-        log.error("Unexpected error", ex);
-        // 일정, 댓글 : 삼항 조건 연산자로 Schedule - Comment 가르기
-        ErrorCode errorCode=request.getRequestURI().contains("/comments")
-            ? ErrorCode.SCHEDULE_VERSION_CONFLICT
-            : ErrorCode.COMMENT_VERSION_CONFLICT;
-
-        ErrorResponse errorResponse=new ErrorResponse(
-            errorCode.getCode(),
-            errorCode.getDefaultMessage(),
-            request.getRequestURI()
-        );
-        return ResponseEntity.status(errorCode.getStatus()).body(errorResponse);
+    public ResponseEntity<ErrorResponse> handleOptimisticLock(HttpServletRequest request){
+        ErrorCode errorCode=ErrorCode.VERSION_CONFLICT;
+        ErrorResponse body=ErrorResponse.of(errorCode, request.getRequestURI());
+        return ResponseEntity.status(errorCode.getStatus()).body(body);
     }
 
 
+    // 3). 검증 예외 : Bean Validation
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse> handleValidation(MethodArgumentNotValidException ex, HttpServletRequest request){
-        ErrorCode errorCode = ErrorCode.BAD_REQUEST;
-        String message = ex.getBindingResult().getAllErrors().get(0).getDefaultMessage();
-        ErrorResponse errorResponse=new ErrorResponse(errorCode.getCode(), message, request.getRequestURI());
-        return ResponseEntity.status(errorCode.getStatus()).body(errorResponse);
+        ErrorCode errorCode = ErrorCode.VALIDATION_ERROR;
+        // ex.getBindingResult().toString(), Stack Trace 없음.
+        log.debug("[VALIDATION] {} - {}", request.getRequestURI(), ex.getBindingResult());// logging
+        ErrorResponse body=ErrorResponse.of(errorCode, request.getRequestURI());
+        return ResponseEntity.status(errorCode.getStatus()).body(body);
     }
 
+    // 4). IllegalArgumentException : BAD_REQUEST로 통일.
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ErrorResponse> handleIllegalArgument(IllegalArgumentException ex, HttpServletRequest request) {
         ErrorCode errorCode = ErrorCode.BAD_REQUEST;
-        ErrorResponse errorResponse = new ErrorResponse(errorCode.getCode(), ex.getMessage(), request.getRequestURI());
-        return ResponseEntity.status(errorCode.getStatus()).body(errorResponse);
+        // ex.getMessage(), Stack Trace 없음.
+        log.debug("[BAD_REQUEST] {} - {}", request.getRequestURI(), ex.getMessage()); // logging
+        ErrorResponse body=ErrorResponse.of(errorCode, request.getRequestURI());
+        return ResponseEntity.status(errorCode.getStatus()).body(body);
     }
 
+    // 5). Exception : 500 : 진짜 서버 버그라서 스택까지 남기는 것.
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleException(Exception ex, HttpServletRequest request) {
-        log.error("Unexpected error", ex);
+
+        // 두 번째 인자가 Throwable임. -> ex 그대로 던지기.
+        log.error("[INTERNAL_ERROR] {} - {}",
+            request.getRequestURI(),
+            ex.getMessage(),
+            ex); // 마지막 인자 Throwable -> Stack Trace까지.
         ErrorCode errorCode = ErrorCode.INTERNAL_ERROR;
-        ErrorResponse errorResponse = new ErrorResponse(errorCode.getCode(), errorCode.getDefaultMessage(), request.getRequestURI());
-        return ResponseEntity.status(errorCode.getStatus()).body(errorResponse);
+        ErrorResponse body=ErrorResponse.of(errorCode, request.getRequestURI());
+        return ResponseEntity.status(errorCode.getStatus()).body(body);
     }
 }

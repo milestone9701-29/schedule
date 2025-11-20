@@ -114,7 +114,7 @@ public class CommentService {
     // Authorization, 정합성.
     private void validateAccess(Schedule schedule, CurrentUser currentUser, Comment comment) {
         // ADMIN, MANAGER : 같은 Schedule 안의 Comment이면, 누구의 것이든 수정 및 삭제가 가능.
-        if (currentUser.isAdmin() || currentUser.isManager()) {
+        if (currentUser.hasAnyRoles(Role.MANAGER, Role.ADMIN)) {
             if (!schedule.getId().equals(comment.getSchedule().getId())) {
                 throw new BusinessAccessDeniedException(ErrorCode.COMMENT_FORBIDDEN);
             }
@@ -147,3 +147,4 @@ public class CommentService {
         commentIdempotencyKeyRepository.save(entity);
     }
 }
+/* isAdmin() || currentUser.isManager() */

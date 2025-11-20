@@ -88,7 +88,7 @@ public class JwtTokenProvider {
 
     /* validateToken
     -> 1. 파싱 -> 1
-    -> 2. JwtException | IllegalArgumentException e : 0 */
+    -> 2. JwtException | IllegalArgumentException e : 0
     public boolean validateToken(String token) {
         try {
             parseClaims(token);
@@ -96,15 +96,15 @@ public class JwtTokenProvider {
         } catch (JwtException | IllegalArgumentException e) {
             return false;
         }
-    }
+    } */
 
     public void validateTokenOrThrow(String token){
         try{
             parseClaims(token);
         }catch(ExpiredJwtException e){
-            throw new JwtAuthenticationException(ErrorCode.JWT_EXPIRED, "Expired JWT token", e);
+            throw new JwtAuthenticationException(ErrorCode.JWT_EXPIRED, e);
         } catch(JwtException|IllegalArgumentException e){ // 서명 깨짐, 형식 오류 등..
-            throw new JwtAuthenticationException(ErrorCode.JWT_INVALID, "Invalid JWT token", e);
+            throw new JwtAuthenticationException(ErrorCode.JWT_INVALID, e);
         }
     }
 

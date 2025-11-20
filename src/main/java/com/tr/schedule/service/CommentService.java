@@ -137,7 +137,7 @@ public class CommentService {
     }
     private Optional<CommentResponse> findExistingCommentResponse(CurrentUser currentUser, Long scheduleId, String commentIdempotencyKey){
         return commentIdempotencyKeyRepository
-            .findByKeyAndUserIdAndScheduleId(commentIdempotencyKey, currentUser.id(), scheduleId) // Optional<CommentIdempotencyKey>
+            .findByIdempotencyKeyAndUserIdAndScheduleId(commentIdempotencyKey, currentUser.id(), scheduleId) // Optional<CommentIdempotencyKey>
             .map(CommentIdempotencyKey::getCommentId)  // key -> key.getCommentId(). : Optional<CommentIdempotencyKey> -> Optional<Long> : commentId
             .map(this::getCommentOrThrow) // id -> this.getCommentOrThrow(id) : Optional<Long> -> Optional<Comment>
             .map(commentMapper::toCommentResponse); // Optional<Comment> -> Optional<CommentResponse>

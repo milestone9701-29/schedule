@@ -142,7 +142,7 @@ public class ScheduleService {
     }
     private Optional<ScheduleResponse> findExistingScheduleResponse(CurrentUser currentUser, String idempotencyKey){
         return idempotencyKeyRepository
-            .findByKeyAndUserId(idempotencyKey, currentUser.id()) // 값이 있으면 그 안의 값을 변환, 없으면 Optional.empty() 유지
+            .findByIdempotencyKeyAndUserId(idempotencyKey, currentUser.id()) // 값이 있으면 그 안의 값을 변환, 없으면 Optional.empty() 유지
             .map(IdempotencyKey::getScheduleId) // key -> key.getScheduleId(). : Optional<IdempotencyKey> -> Optional<Long>
             .map(this::getScheduleOrThrow) // id->this.getScheduleOrThrow(id) : Optional<Long> -> Optional<Schedule>
             .map(scheduleMapper::toScheduleResponse); // Optional<Schedule> -> Optional<ScheduleResponse>

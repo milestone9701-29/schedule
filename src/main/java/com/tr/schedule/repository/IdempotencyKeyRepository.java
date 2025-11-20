@@ -7,5 +7,5 @@ import java.util.Optional;
 
 
 public interface IdempotencyKeyRepository extends JpaRepository<IdempotencyKey, Long> {
-    Optional<IdempotencyKey> findByKeyAndUserId(String key, Long userId); // 2025-11-18 : Key - UserId 찾기
+    Optional<IdempotencyKey> findByIdempotencyKeyAndUserId(String key, Long userId); // 2025-11-18 : Key - UserId 찾기
 }

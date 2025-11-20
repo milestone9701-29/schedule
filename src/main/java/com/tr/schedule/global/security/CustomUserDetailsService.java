@@ -20,7 +20,7 @@ public class CustomUserDetailsService implements UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException{
         User user = userRepository.findByEmail(email)
-            .orElseThrow(() -> new UsernameNotFoundException("Invalid credentials")); // 시큐리티 전용 예외
+            .orElseThrow(() -> new UsernameNotFoundException("Invalid credentials" + email)); // 시큐리티 전용 예외
         return new CustomUserDetails(user);
     }
 
@@ -28,7 +28,7 @@ public class CustomUserDetailsService implements UserDetailsService {
     // JWT 안의 id로 조회하는 헬퍼.
     public UserDetails loadUserById(Long id) {
         User user = userRepository.findById(id)
-            .orElseThrow(()-> new UsernameNotFoundException("Invalid credentials")); // 시큐리티 전용 예외
+            .orElseThrow(()-> new UsernameNotFoundException("Invalid credentials" + id)); // 시큐리티 전용 예외
         return new CustomUserDetails(user);
     }
 }

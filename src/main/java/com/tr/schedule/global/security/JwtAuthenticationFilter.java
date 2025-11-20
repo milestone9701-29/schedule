@@ -32,7 +32,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter { // JSON WEB 
         // header : null != header가 "Bearer "(공백 포함 7 : header.substring(7))을 문자열 토큰에 저장.
 
         // 1). Authorization Header체크 -> 없으면 다음으로.
-        if (header == null && !header.startsWith("Bearer ")) {
+        if (header == null || !header.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
             return;
         }
@@ -81,7 +81,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter { // JSON WEB 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request){
         String path=request.getRequestURI();
-        return path.startsWith("/api/auth/") || path.startsWith("/h2-console") || path.startsWith("/actuator/health");
+        return path.startsWith("/api/auth/")  // Signup, Login
+            || path.startsWith("/h2-console") // DB(SQL이긴 한데 이번 과제 평가 직후로 H2로 바꿀 생각.)
+            || path.startsWith("/actuator/health"); // Health Checking용 Endpoint
     }
 
 

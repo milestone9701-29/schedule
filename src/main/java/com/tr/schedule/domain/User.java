@@ -17,9 +17,9 @@ import java.util.Set;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
-@Table(name="users",
+@Table(name="users", // DDL : Index 정의
     uniqueConstraints=@UniqueConstraint(name = "uk_users_email", columnNames="email"),
-    indexes={@Index(name="idx_users_username", columnList="username")})
+    indexes={@Index(name="idx_users_username", columnList="username")}) // index name, columnname : Entity
 public class User extends BaseTimeEntity {
     @Id @GeneratedValue(strategy=GenerationType.IDENTITY)
     private Long id;

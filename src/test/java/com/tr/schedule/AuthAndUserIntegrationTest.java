@@ -33,27 +33,31 @@ public class AuthAndUserIntegrationTest {
     private String signUpAndLoginDefaultUser() throws Exception{
         // SignUp
         SignupRequest signupRequest = new SignupRequest(
-            "test@example.com",
-            "tester",
-            "password123" // SignupRequest에 맞게.
+            "testplayer00@alwayssleepy.kr",
+            "test_player",
+            "password00"
         );
 
-        mockMvc.perform(post("/api/auth/signup") // RequestBuilder
-            .contentType(MediaType.APPLICATION_JSON) // JACKSON 형식
-            .content(objectMapper.writeValueAsString(signupRequest))) // String으로.
-            .andExpect(status().isCreated());
+        // post
+        // JACKSON
+        // Parsing
+        // status
+        mockMvc.perform(post("/api/auth/signup")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsString(signupRequest)))
+            .andExpect(status().isCreated()); // 201
 
-            // Login req 내용
+        // Login
         LoginRequest loginRequest = new LoginRequest(
-            "test@example.com",
-            "password123"
+            "testplayer00@alwayssleepy.kr",
+            "password00"
         );
 
-            // 파싱
+        // Parsing
         String loginResponseBody = mockMvc.perform(post("/api/auth/login")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(loginRequest)))
-            .andExpect(status().isOk())
+            .andExpect(status().isOk()) // 200
             .andExpect(jsonPath("$.token").exists()) // AuthResponse 기준.
             .andReturn()
             .getResponse()
@@ -77,7 +81,7 @@ public class AuthAndUserIntegrationTest {
         mockMvc.perform(post("/api/auth/signup")
             .contentType(MediaType.APPLICATION_JSON)
             .content(objectMapper.writeValueAsString(signupRequest)))
-            .andExpect(status().isCreated());
+            .andExpect(status().isCreated()); // 201
 
         LoginRequest loginRequest = new LoginRequest(
             "login-success@example.com",
@@ -88,7 +92,7 @@ public class AuthAndUserIntegrationTest {
         mockMvc.perform(post("/api/auth/login")
             .contentType(MediaType.APPLICATION_JSON)
             .content(objectMapper.writeValueAsString(loginRequest)))
-            .andExpect(status().isOk())
+            .andExpect(status().isOk()) // 201
             .andExpect(jsonPath("$.token").exists())
             .andExpect(jsonPath("$.user.email").value("login-success@example.com"));
     }
@@ -106,7 +110,7 @@ public class AuthAndUserIntegrationTest {
         mockMvc.perform(post("/api/auth/signup")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(signupRequest)))
-            .andExpect(status().isCreated());
+            .andExpect(status().isCreated()); // 200
 
         LoginRequest loginRequest = new LoginRequest(
             "login-fail@example.com",
@@ -116,8 +120,7 @@ public class AuthAndUserIntegrationTest {
         mockMvc.perform(post("/api/auth/login")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(loginRequest)))
-            // 네 GlobalExceptionHandler 매핑에 맞게 401 혹은 403으로 수정
-            .andExpect(status().isUnauthorized())  // or isForbidden()
+            .andExpect(status().isUnauthorized()) // 401
             .andExpect(jsonPath("$.code").exists())
             .andExpect(jsonPath("$.message").isNotEmpty());
     }
@@ -128,6 +131,8 @@ public class AuthAndUserIntegrationTest {
     void getMyProfile_withValidToken_returnsMyInfo() throws Exception{
             // given : 기본 유저 회원가입 + 로그인해서 토큰 확보
             String token = signUpAndLoginDefaultUser();
+
+
 
             // when & then
             mockMvc.perform(get("/api/users/me")

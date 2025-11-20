@@ -1,8 +1,5 @@
 package com.tr.schedule.global.security;
 
-
-import com.tr.schedule.global.exception.JwtAuthenticationException;
-import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

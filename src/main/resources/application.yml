@@ -6,7 +6,7 @@ spring:
     driver-class-name: com.mysql.cj.jdbc.Driver
   jpa:
     hibernate:
-      ddl-auto: update    # 개발 중: update, 제출 전: validate 권장
+      ddl-auto: update   # 개발 중: update, 제출 전: validate 권장 create-drop
     properties:
       hibernate:
         format_sql: true

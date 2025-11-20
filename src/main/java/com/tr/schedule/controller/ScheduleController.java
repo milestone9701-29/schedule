@@ -55,7 +55,7 @@ public class ScheduleController {
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
         // return ResponseEntity.status(HttpStatus.NO_CONTENT).body(null);
     }
-    // 내 일정
+    // 내 일정 : List 변환으로 데이터 다루는 테크닉 보완 필요.
     @GetMapping("/me")
     public ResponseEntity<Page<ScheduleResponse>> listUserSchedules(@AuthenticationPrincipal CustomUserDetails principal,
                                                           @PageableDefault

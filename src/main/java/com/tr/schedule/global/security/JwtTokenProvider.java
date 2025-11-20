@@ -1,6 +1,9 @@
 package com.tr.schedule.global.security;
 
+import com.tr.schedule.global.exception.ErrorCode;
+import com.tr.schedule.global.exception.JwtAuthenticationException;
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 
@@ -86,14 +89,25 @@ public class JwtTokenProvider {
     /* validateToken
     -> 1. 파싱 -> 1
     -> 2. JwtException | IllegalArgumentException e : 0 */
-    public boolean validateToken(String token){
-        try{
+    public boolean validateToken(String token) {
+        try {
             parseClaims(token);
             return true;
-        }catch(JwtException | IllegalArgumentException e){
+        } catch (JwtException | IllegalArgumentException e) {
             return false;
         }
     }
+
+    public void validateTokenOrThrow(String token){
+        try{
+            parseClaims(token);
+        }catch(ExpiredJwtException e){
+            throw new JwtAuthenticationException(ErrorCode.JWT_EXPIRED, "Expired JWT token", e);
+        } catch(JwtException|IllegalArgumentException e){ // 서명 깨짐, 형식 오류 등..
+            throw new JwtAuthenticationException(ErrorCode.JWT_INVALID, "Invalid JWT token", e);
+        }
+    }
+
 
     // JJWT ver 0.12
     /*

@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+// Http Header : Kebab-Case
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/schedules/{scheduleId}/comments") // 댓글은 스케쥴에 종속하기 때문.
@@ -27,7 +28,7 @@ public class CommentController {
     public ResponseEntity<CommentResponse> createComment(@AuthenticationPrincipal CustomUserDetails principal,
                                                          @PathVariable Long scheduleId,
                                                          @Valid @RequestBody CommentCreateRequest request,
-                                                         @RequestHeader(value="Comment-Idempotency-Key", required=false) String idempotencyKey){
+                                                         @RequestHeader(value="Idempotency-Key", required=false) String idempotencyKey){
         CurrentUser currentUser=CurrentUser.from(principal);
 
         CommentResponse response=commentService.createComment(currentUser, scheduleId, request, idempotencyKey);

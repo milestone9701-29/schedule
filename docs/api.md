@@ -1,24 +1,23 @@
-# API 설계 (초안)
+# API
 
 ## Auth
 - POST `/api/auth/signup`
 - POST `/api/auth/login`
-- POST `/api/auth/logout`
-- GET  `/api/auth/me`
+## User
+- GET `/api/users/{userId}` // 프로필
+- GET `/api/users/me`
 
 ## Schedules
 - POST `/api/schedules`
-- GET  `/api/schedules?page=&size=&author=&q=`  // 기본 sort: updatedAt DESC, size≤50
-- GET  `/api/schedules/{id}`                     // 상세(+comments?) : 이건 보고.
-- PATCH `/api/schedules/{id}`                    // 소유자
-- DELETE `/api/schedules/{id}`                   // 소유자
+- GET  `/api/schedules/me`
+- GET  `/api/schedules`
+- PATCH `/api/schedules/{scheduleid}`
+- DELETE `/api/schedules/{scheduleid}`
 
 ## Comments
-- POST `/api/schedules/{id}/comments`
-- GET  `/api/schedules/{id}/comments`
-- PATCH `/api/comments/{id}`                     // 소유자
-- DELETE `/api/comments/{id}`                    // 소유자
+- POST `/api/schedules/{scheduleId}/comments`
+- GET  `/api/schedules/{scheduleId}/comments`
+- PATCH `/api/schedules/{scheduleId}/comments/{commentId}`
+- DELETE `/api/schedules/{scheduleId}/comments/{commentId}`
 
-## 오류코드 표
-- 400 validation, 401 인증X, 403 권한X, 404 없음, 409 충돌/제한, 500 안전망
-- 학습 진행에 따라 더 추가할 가능성 농후
+

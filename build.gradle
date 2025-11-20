@@ -35,7 +35,7 @@ dependencies {
     annotationProcessor("org.projectlombok:lombok")
 
     // 2025-11-13 : SQL connector
-    runtimeOnly("com.mysql:mysql-connector-j")
+    runtimeOnly("com.mysql:mysql-connector-j:8.4.0")
 
     // 2025-11-16 : security, jwt 라이브러리.
     implementation("org.springframework.boot:spring-boot-starter-security")

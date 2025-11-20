@@ -31,8 +31,9 @@ public class GlobalExceptionHandler {
     // JPA/SpringData 예외 : Version 충돌 감지
     @ExceptionHandler({OptimisticLockException.class, ObjectOptimisticLockingFailureException.class})
     public ResponseEntity<ErrorResponse> handleOptimisticLock(Exception ex, HttpServletRequest request){
+        log.error("Unexpected error", ex);
         // 일정, 댓글 : 삼항 조건 연산자로 Schedule - Comment 가르기
-        ErrorCode errorCode=request.getRequestURI().contains("/comments") //
+        ErrorCode errorCode=request.getRequestURI().contains("/comments")
             ? ErrorCode.SCHEDULE_VERSION_CONFLICT
             : ErrorCode.COMMENT_VERSION_CONFLICT;
 

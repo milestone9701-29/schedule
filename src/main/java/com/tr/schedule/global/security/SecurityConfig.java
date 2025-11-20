@@ -1,6 +1,7 @@
 package com.tr.schedule.global.security;
 
 
+import com.tr.schedule.global.exception.JwtAuthenticationException;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -27,6 +28,9 @@ public class SecurityConfig {
     private final JwtTokenProvider jwtTokenProvider;
     private final CustomUserDetailsService customUserDetailsService;
 
+    private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
+    private final JwtAccessDeniedHandler jwtAccessDeniedHandler;
+
     /*JwtAuthenticationFilter를 Bean에 등록 -> filterChain에 주입.
     -> Authorization : Bearer (7자 문자열) 토큰 -> 검증 -> SecurityContext 세팅 담당.*/
     @Bean
@@ -40,25 +44,20 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(
         HttpSecurity http,
         JwtAuthenticationFilter jwtAuthenticationFilter
-    ) throws Exception {
+        ) throws Exception {
         http
             .csrf(csrf -> csrf.disable())
             .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
-            // Security 단계에서의 예외 처리.
+            // Security 단계에서의 예외     처리.
             // 문제 : response.sendError(status)로 상태 코드만 제시
             // -> ErrorResponse + ErrorCode를 Security 단계 또한 통일
             .exceptionHandling(ex -> ex
                 // 미인증(토큰 없음, 깨짐) -> authenticationEntryPoint -> 401
-                .authenticationEntryPoint((request, response, authException) -> {
-                    response.sendError(HttpServletResponse.SC_UNAUTHORIZED);
-                })
+                .authenticationEntryPoint(jwtAuthenticationEntryPoint)
                 // 인증은 됐으나, 권한 부족 -> accessDeniedHandler -> 403
-                .accessDeniedHandler((request, response, accessDeniedException) -> {
-                    response.sendError(HttpServletResponse.SC_FORBIDDEN);
-                })
-            )
-
+                .accessDeniedHandler(jwtAccessDeniedHandler)
+                )
             // --- // 2025-11-18
             // hasRole("권한명") : 접근 권한
             // hayAnyRole("권한명1", "권한명2") : 접근 권한

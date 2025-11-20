@@ -1,0 +1,43 @@
+@startuml
+
+!theme plain
+top to bottom direction
+skinparam linetype ortho
+
+class comments {
+   author_id: bigint
+   created_at: datetime(6)
+   schedule_id: bigint
+   updated_at: datetime(6)
+   version: bigint
+   content: varchar(100)
+   id: bigint
+}
+class schedules {
+   created_at: datetime(6)
+   owner_id: bigint
+   updated_at: datetime(6)
+   version: bigint
+   title: varchar(50)
+   content: varchar(200)
+   id: bigint
+}
+class user_roles {
+   user_id: bigint
+   role: enum('admin', 'manager', 'user')
+}
+class users {
+   created_at: datetime(6)
+   updated_at: datetime(6)
+   version: bigint
+   username: varchar(30)
+   email: varchar(100)
+   password_hash: varchar(100)
+   id: bigint
+}
+
+comments    -[#595959,plain]-^  schedules  : "schedule_id:id"
+comments    -[#595959,plain]-^  users      : "author_id:id"
+schedules   -[#595959,plain]-^  users      : "owner_id:id"
+user_roles  -[#595959,plain]-^  users      : "user_id:id"
+@enduml

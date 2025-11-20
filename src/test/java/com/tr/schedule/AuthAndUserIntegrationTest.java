@@ -143,7 +143,11 @@ public class AuthAndUserIntegrationTest {
     @Test
     void getMyProfile_withoutToken_returnsUnauthorized() throws Exception {
         mockMvc.perform(get("/api/users/me"))
-            .andExpect(status().isUnauthorized()); // Security 설정에 따라 401/403 맞춰 수정
+            .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.code").value("AUTH_INVALID_PASSWORD"))
+            .andExpect(jsonPath("$.message").isNotEmpty())
+            .andExpect(jsonPath("$.path").value("/api/users/me")); // Security 설정에 따라 401/403 맞춰 수정
+
     }
 
     @Test
@@ -176,7 +180,9 @@ public class AuthAndUserIntegrationTest {
         mockMvc.perform(post("/api/schedules")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
-            .andExpect(status().isUnauthorized());
+            .andExpect(status().isUnauthorized())
+            .andExpect(jsonPath("$.code").value("AUTH_INVALID_PASSWORD"))
+            .andExpect(jsonPath("$.path").value("/api/schedules"));
     }
 
     @Test
@@ -194,6 +200,29 @@ public class AuthAndUserIntegrationTest {
         // 응답이 List인지, page 래퍼인지에 따라 .andExpect(jsonPath("$.content", hasSize(2))); 등.
     }
 
+    @Test
+    void request_withInvalidToken_returnsJwtInvalidError() throws Exception{
+        String invalidToken="this.is.not.jwt";
+        mockMvc.perform(get("/api/schedules/me")
+            .header("Authorization","Bearer " + invalidToken))
+            .andExpect(status().isUnauthorized())
+            .andExpect(jsonPath("$.code").value("JWT_401_INVALID"))
+            .andExpect(jsonPath("$.message").isNotEmpty());
+    }
+
+    @Test
+    void accessAdminEndpoint_withUserRole_returnsForbidden() throws Exception{
+        // USER로 회원가입 + 로그인
+        String token = signUpAndLoginDefaultUser();
+        mockMvc.perform(get("/api/admin/some-endpoint")
+            .header("Authorization", "Bearer " + token))
+            .andExpect(status().isForbidden())
+            .andExpect(jsonPath("$.code").value("AUTH_INVALID_PASSWORD"))
+            .andExpect(jsonPath("$.message").isNotEmpty());
+    }
+
+
+
     private void createSchedule(String token, String title) throws Exception {
         ScheduleCreateRequest request = new ScheduleCreateRequest(
             title,
@@ -206,4 +235,6 @@ public class AuthAndUserIntegrationTest {
                 .content(objectMapper.writeValueAsString(request)))
             .andExpect(status().isCreated());
     }
+
+
 }

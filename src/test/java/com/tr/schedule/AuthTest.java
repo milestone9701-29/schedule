@@ -3,17 +3,23 @@ package com.tr.schedule;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 // import com.tr.schedule.dto.auth.AuthResponse;
+import com.tr.schedule.domain.User;
 import com.tr.schedule.dto.auth.LoginRequest;
 import com.tr.schedule.dto.auth.SignupRequest;
+import com.tr.schedule.global.security.JwtTokenProvider;
+import com.tr.schedule.repository.UserRepository;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.test.web.servlet.MockMvc.*;
 
-
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -52,13 +58,11 @@ public class AuthTest {
     private static final String DEFAULT_PASSWORD="password00";
 
     // 2). util
-    private final MockMvc mockMvc;
-    private final ObjectMapper objectMapper;
+    @Autowired private MockMvc mockMvc;
 
-    public AuthTest(MockMvc mockMvc, ObjectMapper objectMapper){
-        this.mockMvc = mockMvc;
-        this.objectMapper = objectMapper;
-    }
+    @Autowired private ObjectMapper objectMapper;
+    @Autowired private JwtTokenProvider jwtTokenProvider;
+    @Autowired private UserRepository userRepository;
 
     // 3). 회원가입 : email, username, password(request)
     private void signUp(String email,
@@ -139,6 +143,7 @@ public class AuthTest {
 
     // ----------------------------------------------------------------------------------- //
 
+    // 8). 중복 이메일로 회원가입 신청 : 409
     @Test
     void signUp_withDuplicateEmail_returns409() throws Exception{
         // given : 회원 가입.
@@ -153,10 +158,118 @@ public class AuthTest {
             .contentType(MediaType.APPLICATION_JSON)
             .content(objectMapper.writeValueAsString(duplicate)))
             .andExpect(status().isConflict())
-            .andExpect(jsonPath("$.errorCode").value("A409-01"));
+            .andExpect(jsonPath("$.code").value("A409-01"));
 
         // .andExpect(jsonPath("$.code").value("A409-01"));
+    }
+
+    // 9). 비밀번호를 틀리는 케이스 : 401 : A401-01
+    @Test
+    void login_withWrongPassword_returns401() throws Exception{
+        // given : 회원가입
+        signUp(DEFAULT_EMAIL,DEFAULT_USERNAME,DEFAULT_PASSWORD);
+        // when : 패스워드를 틀린 경우.
+        LoginRequest loginRequest=new LoginRequest(
+            DEFAULT_EMAIL,
+            "wrong-password"
+        );
+
+        // then
+        mockMvc.perform(post("/api/auth/login")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsString(loginRequest)))
+            .andExpect(status().isUnauthorized()) // 401
+            .andExpect(jsonPath("$.code").value("A401-01"));
+    }
+
+    // 10). 없는 이메일로 로그인 : 401
+    @Test
+    void login_withWrongEmail_returns401() throws Exception{
+        signUp(DEFAULT_EMAIL,DEFAULT_USERNAME,DEFAULT_PASSWORD);
+        // when : 없는 이메일로 로그인
+        LoginRequest loginRequest=new LoginRequest(
+            DEFAULT_EMAIL,
+            "wrong-password"
+        );
+
+        // then
+        mockMvc.perform(post("/api/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(loginRequest)))
+            .andExpect(status().isUnauthorized()) // 401
+            .andExpect(jsonPath("$.code").value("A401-01"));
+    }
+
+    // ----------------------------------------------------------------------------------- //
+    // 보호된 엔드포인트 + 토큰 실험
+
+    // 11). 토큰 없이 접근 : 401
+    @Test
+    void getMyProfile_withOutToken_returns401() throws Exception{
+        mockMvc.perform(get("/api/users/me"))
+            .andExpect(status().isUnauthorized());
 
     }
+
+    // 12). 쓰레기 토큰 : 401
+    @Test
+    void getMyProfile_withGarbageToken_returns401() throws Exception{
+        mockMvc.perform(get("/api/users/me")
+            .header("Authorization", "Bearer but-"))
+            .andExpect(status().isUnauthorized());
+    }
+
+    // 13). 정상 토큰 : 200 + UserProfiles
+    @Test
+    void getMyProfile_withValidToken_returnsMyInfo() throws Exception{
+        String token=signUpAndLoginDefaultUser();
+
+        mockMvc.perform(get("/api/users/me")
+            .header("Authorization", "Bearer "+token))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.email").value(DEFAULT_EMAIL))
+            .andExpect(jsonPath("$.username").value(DEFAULT_USERNAME));
+    }
+
+    // 14). 회원가입 Validation 실패 : 400
+    @Test
+    void signUp_withInvalidEmailFormat_returns400() throws Exception{
+        SignupRequest signupRequest=new SignupRequest(
+            "not-an-email",
+            DEFAULT_USERNAME,
+            DEFAULT_PASSWORD
+        );
+
+        mockMvc.perform(post("/api/auth/signup")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsString(signupRequest)))
+            .andExpect(jsonPath("$.code").value("A401-01"));
+
+    }
+
+    // 15). 만료 토큰 : 401 : JwtTokenProvider.generateExpiredToken(userId);
+    @Test
+    void getMyProfile_withExpiredToken_returns401() throws Exception{
+        // given : userId and expired token
+        signUp(DEFAULT_EMAIL,DEFAULT_USERNAME,DEFAULT_PASSWORD);
+        User user=userRepository.findByEmail(DEFAULT_EMAIL).orElseThrow();
+        String expiredToken=jwtTokenProvider.generateExpiredToken(user.getId());
+
+        // when and then
+        mockMvc.perform(get("/api/users/me")
+            .header(HttpHeaders.AUTHORIZATION, "Bearer "+expiredToken))
+            .andExpect(status().isUnauthorized());
+    }
+
+    // 16). Authorization : ADMIN - USER 200 403
+    @Test
+    void adminEndpoint_withUserRole_returns403() throws Exception{
+        // given : userToken
+        String userToken=signUpAndLoginDefaultUser(); // USER
+        mockMvc.perform(get("/api/users/me")
+            .header(HttpHeaders.AUTHORIZATION, "Bearer "+userToken))
+            .andExpect(status().isForbidden());
+    }
+
 }
 

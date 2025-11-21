@@ -19,7 +19,7 @@ import java.util.Set;
 @Entity
 @Table(name="users", // DDL : Index 정의
     uniqueConstraints=@UniqueConstraint(name = "uk_users_email", columnNames="email"),
-    indexes={@Index(name="idx_users_username", columnList="username")}) // index name, columnname : Entity
+        indexes={@Index(name="idx_users_username", columnList="username")}) // index name, column name : Entity
 public class User extends BaseTimeEntity {
     @Id @GeneratedValue(strategy=GenerationType.IDENTITY)
     private Long id;

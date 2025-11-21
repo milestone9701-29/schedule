@@ -63,7 +63,7 @@ public class AuthService {
     // 정리용 헬퍼 메서드
     private User findUserByEmailOrThrow(LoginRequest request){
         return userRepository.findByEmail(request.getEmail()) // 검사 + 대입
-            .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.USER_NOT_FOUND));
+            .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.AUTH_INVALID_CREDENTIALS));
     }
     private boolean existsByEmail(SignupRequest request){
         return userRepository.existsByEmail(request.getEmail());

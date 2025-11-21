@@ -2,10 +2,7 @@ package com.tr.schedule.global.security;
 
 import com.tr.schedule.global.exception.ErrorCode;
 import com.tr.schedule.global.exception.JwtAuthenticationException;
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.ExpiredJwtException;
-import io.jsonwebtoken.JwtException;
-import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.*;
 
 import io.jsonwebtoken.security.Keys;
 
@@ -128,6 +125,21 @@ public class JwtTokenProvider {
     2. expired
     3. 형식 깨짐.
     */
+
+    // test
+    public String generateExpiredToken(Long userId){
+        Date now=new Date();
+        Date past=new Date(now.getTime()-1000L*60); // 1분 전.
+
+        return Jwts.builder()
+            .setSubject(String.valueOf(userId))
+            .setIssuedAt(past)
+            .setExpiration(past) // 이미 만료
+            .signWith(secretKey, SignatureAlgorithm.HS256)
+            .compact();
+    }
+
+
 
 }
 /*

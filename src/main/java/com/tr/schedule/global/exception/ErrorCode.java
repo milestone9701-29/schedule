@@ -29,7 +29,7 @@ public enum ErrorCode {
     AUTH_EMAIL_ALREADY_EXISTS(HttpStatus.CONFLICT, "A409-01", "이미 사용 중인 Email입니다."),
     AUTH_EMAIL_FORMAT_INVALID(HttpStatus.BAD_REQUEST, "A400-01", "Email 형식이 올바르지 않습니다"),
     AUTH_INVALID_CREDENTIALS(HttpStatus.UNAUTHORIZED, "A401-01", "Email 또는 Password가 올바르지 않습니다."),
-    AUTH_TOKEN_EXPIRED(HttpStatus.UNAUTHORIZED, "A401-01", "Token이 만료되었습니다."),
+    AUTH_TOKEN_EXPIRED(HttpStatus.UNAUTHORIZED, "A401-02", "Token이 만료되었습니다."),
 
     // Schedule
     SCHEDULE_NOT_FOUND(HttpStatus.NOT_FOUND, "S404-01", "존재하지 않는 일정입니다."),

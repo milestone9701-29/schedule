@@ -13,7 +13,7 @@ import lombok.*;
     name="idempotency_Keys",
     uniqueConstraints=@UniqueConstraint(
         name="uk_idempotency_keys_key_user",
-        columnNames={"user_id", "idempotency_Key"}
+        columnNames={"user_id", "idempotency_key"}
     )
 )
 public class IdempotencyKey extends BaseTimeEntity{

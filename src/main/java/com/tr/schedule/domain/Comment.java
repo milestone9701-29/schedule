@@ -16,7 +16,7 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor(access=AccessLevel.PROTECTED)
 @Entity
-@Table(name="comments", indexes={@Index(name="idx_comment_schedule_created", columnList="schedule_id, create_at")})
+@Table(name="comments", indexes={@Index(name="idx_comment_schedule_created", columnList="schedule_id, created_at")})
 public class Comment extends BaseTimeEntity {
     @Id @GeneratedValue(strategy= GenerationType.IDENTITY)
     private Long id;

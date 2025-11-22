@@ -51,3 +51,9 @@ public class RefreshToken extends BaseTimeEntity {
         this.revoked=true;
     }
 }
+/*
+* private String userAgent;
+
+private String ip;
+
+private String deviceName;*/

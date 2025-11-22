@@ -1,5 +1,6 @@
 package com.tr.schedule.controller;
 
+import com.tr.schedule.global.security.AuthUser;
 import com.tr.schedule.global.security.CurrentUser;
 import com.tr.schedule.global.security.CustomUserDetails;
 import com.tr.schedule.dto.schedule.ScheduleCreateRequest;
@@ -27,29 +28,26 @@ public class ScheduleController {
 
 
     @PostMapping
-    public ResponseEntity<ScheduleResponse> createSchedule(@AuthenticationPrincipal CustomUserDetails principal,
+    public ResponseEntity<ScheduleResponse> createSchedule(@AuthUser CurrentUser currentUser,
                                                            @Valid @RequestBody ScheduleCreateRequest request,
                                                            @RequestHeader(value="Idempotency-Key", required=false) String idempotencyKey){
-        CurrentUser currentUser=CurrentUser.from(principal); // User Check
 
         ScheduleResponse response=scheduleService.createSchedule(currentUser, request, idempotencyKey);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @PatchMapping("/{scheduleId}")
-    public ResponseEntity<ScheduleResponse> updateSchedule(@AuthenticationPrincipal CustomUserDetails principal,
+    public ResponseEntity<ScheduleResponse> updateSchedule(@AuthUser CurrentUser currentUser,
                                                            @PathVariable Long scheduleId,
                                                            @Valid @RequestBody ScheduleUpdateRequest request){
-        CurrentUser currentUser=CurrentUser.from(principal); // User Check
 
         ScheduleResponse response=scheduleService.updateSchedule(currentUser, scheduleId, request);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
     @DeleteMapping("/{scheduleId}")
-    public ResponseEntity<Void> deleteSchedule(@AuthenticationPrincipal CustomUserDetails principal,
+    public ResponseEntity<Void> deleteSchedule(@AuthUser CurrentUser currentUser,
                                                @PathVariable Long scheduleId){
-        CurrentUser currentUser=CurrentUser.from(principal);
 
         scheduleService.deleteSchedule(currentUser, scheduleId);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
@@ -57,10 +55,9 @@ public class ScheduleController {
     }
     // 내 일정 : List 변환으로 데이터 다루는 테크닉 보완 필요.
     @GetMapping("/me")
-    public ResponseEntity<Page<ScheduleResponse>> listUserSchedules(@AuthenticationPrincipal CustomUserDetails principal,
+    public ResponseEntity<Page<ScheduleResponse>> listUserSchedules(@AuthUser CurrentUser currentUser,
                                                           @PageableDefault
                                                               (size=10, sort={"updatedAt"}, direction= Sort.Direction.DESC) Pageable pageable){
-        CurrentUser currentUser=CurrentUser.from(principal);
 
         return ResponseEntity.status(HttpStatus.OK).body(scheduleService.listUserSchedules(currentUser, pageable));
     }

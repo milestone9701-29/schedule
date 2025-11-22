@@ -89,7 +89,9 @@ public class AuthTest {
             .contentType(MediaType.APPLICATION_JSON)
             .content(objectMapper.writeValueAsString(loginRequest)))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.token").exists())
+            .andExpect(jsonPath("$.accessToken").exists())
+            .andExpect(jsonPath("$.refreshToken").exists())
+            .andExpect(jsonPath("$.email").value(DEFAULT_EMAIL))
             .andReturn()
             .getResponse()
             .getContentAsString();
@@ -187,7 +189,7 @@ public class AuthTest {
         signUp(DEFAULT_EMAIL,DEFAULT_USERNAME,DEFAULT_PASSWORD);
         // when : 없는 이메일로 로그인
         LoginRequest loginRequest=new LoginRequest(
-            DEFAULT_EMAIL,
+            "flying_cat@rainbow.com",
             DEFAULT_PASSWORD
         );
 

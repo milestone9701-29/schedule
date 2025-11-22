@@ -1,6 +1,7 @@
 package com.tr.schedule.controller;
 
 
+import com.tr.schedule.global.security.AuthUser;
 import com.tr.schedule.global.security.CurrentUser;
 import com.tr.schedule.global.security.CustomUserDetails;
 import com.tr.schedule.dto.comment.CommentCreateRequest;
@@ -25,32 +26,30 @@ public class CommentController {
     private final CommentService commentService;
 
     @PostMapping
-    public ResponseEntity<CommentResponse> createComment(@AuthenticationPrincipal CustomUserDetails principal,
+    public ResponseEntity<CommentResponse> createComment(@AuthUser CurrentUser currentUser,
                                                          @PathVariable Long scheduleId,
                                                          @Valid @RequestBody CommentCreateRequest request,
                                                          @RequestHeader(value="Idempotency-Key", required=false) String idempotencyKey){
-        CurrentUser currentUser=CurrentUser.from(principal);
+
 
         CommentResponse response=commentService.createComment(currentUser, scheduleId, request, idempotencyKey);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @PatchMapping("/{commentId}")
-    public ResponseEntity<CommentResponse> updateComment(@AuthenticationPrincipal CustomUserDetails principal,
+    public ResponseEntity<CommentResponse> updateComment(@AuthUser CurrentUser currentUser,
                                                          @PathVariable Long scheduleId,
                                                          @PathVariable Long commentId,
                                                          @Valid @RequestBody CommentUpdateRequest request){
-        CurrentUser currentUser=CurrentUser.from(principal);
 
         CommentResponse response=commentService.updateComment(currentUser, scheduleId ,commentId, request);
         return  ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
     @DeleteMapping("/{commentId}")
-    public ResponseEntity<Void> deleteComment(@AuthenticationPrincipal CustomUserDetails principal,
+    public ResponseEntity<Void> deleteComment(@AuthUser CurrentUser currentUser,
                                               @PathVariable Long scheduleId,
                                               @PathVariable Long commentId){
-        CurrentUser currentUser=CurrentUser.from(principal);
 
         commentService.deleteComment(currentUser, scheduleId, commentId);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();

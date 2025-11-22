@@ -30,7 +30,7 @@ public class RefreshToken extends BaseTimeEntity {
     private boolean revoked=false;
 
 
-
+    // user + token + 만료일
     @Builder(access=AccessLevel.PRIVATE)
     private RefreshToken(User user, String token, LocalDateTime expiresAt) {
         this.user = user;

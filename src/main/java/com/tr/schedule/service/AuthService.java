@@ -70,15 +70,17 @@ public class AuthService {
     }
 
     // refreshAccessToken
+    // rotation : 매번 refresh 쓸 때마다 새 refresh 발급 + 예전 건 revoke
+    // 이미 revoke된 토큰이 또 들어오면 ->  이상한 요청으로 보고 error
     @Transactional
     public AuthTokens refreshAccessToken(String refreshTokenValue){
         RefreshToken refreshToken=refreshTokenRepository.findByToken(refreshTokenValue)
-            .orElseThrow(()-> new JwtAuthenticationException(ErrorCode.AUTH_REFRESH_TOKEN_EXPIRED)); // 이거 에러코드 몇 번이지 404?
+            .orElseThrow(()-> new JwtAuthenticationException(ErrorCode.AUTH_REFRESH_TOKEN_EXPIRED)); // 401
         // token 만료 또는 취소
         if(refreshToken.isExpired()||refreshToken.isRevoked()){
-            throw new JwtAuthenticationException(ErrorCode.AUTH_REFRESH_TOKEN_EXPIRED); // 만료되어서 찾을 수 없다? 만료되어서 권한이 없다?? 와 어렵네
+            throw new JwtAuthenticationException(ErrorCode.AUTH_REFRESH_TOKEN_EXPIRED); // 401
         }
-        // userId
+        // 직접 찾기
         User user=refreshToken.getUser();
 
         return issueTokens(user);
@@ -100,6 +102,7 @@ public class AuthService {
         }
     }
     // 로그인 시 RefreshToken 발급 및 저장
+    // 회전 생성단
     private AuthTokens issueTokens(User user){
         CustomUserDetails principal = new CustomUserDetails(user);
 

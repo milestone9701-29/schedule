@@ -44,6 +44,9 @@ void login_withValidCredentials_returnsToken() throws Exception {
 
 */
 
+// 컨트롤러 반환 타입 = DTO
+// Jackson이 DTO → JSON
+// 테스트에선 jsonPath("$.필드")로 그 JSON을 검증
 
 @ActiveProfiles("test")
 @SpringBootTest
@@ -79,7 +82,7 @@ public class AuthTest {
     }
 
     // 4). 로그인 : email, Password(request) -> Login + token(String)
-    private String loginAndGetToken(String email, String password) throws Exception{
+    private String loginAndGetAccessToken(String email, String password) throws Exception{
         LoginRequest loginRequest=new LoginRequest(
             email,
             password
@@ -91,7 +94,11 @@ public class AuthTest {
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.accessToken").exists())
             .andExpect(jsonPath("$.refreshToken").exists())
+            .andExpect(jsonPath("$.tokenType").exists())
+            .andExpect(jsonPath("$.id").exists())
             .andExpect(jsonPath("$.email").value(DEFAULT_EMAIL))
+            .andExpect(jsonPath("$.username").value(DEFAULT_USERNAME))
+            .andExpect(jsonPath("$.createdAt").exists())
             .andReturn()
             .getResponse()
             .getContentAsString();
@@ -106,7 +113,7 @@ public class AuthTest {
     // 5). 편의 메서드 : 가입 - 로그인
     private String signUpAndLoginDefaultUser()throws Exception{
         signUp(DEFAULT_EMAIL,DEFAULT_USERNAME,DEFAULT_PASSWORD);
-        return loginAndGetToken(DEFAULT_EMAIL, DEFAULT_PASSWORD);
+        return loginAndGetAccessToken(DEFAULT_EMAIL, DEFAULT_PASSWORD);
     }
 
     // 6). 회원가입 : 201 : Response 값에 맞출 것.
@@ -121,6 +128,9 @@ public class AuthTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(signupRequest)))
             .andExpect(status().isCreated()) // 201
+            .andExpect(jsonPath("$.accessToken").exists())
+            .andExpect(jsonPath("$.refreshToken").exists())
+            .andExpect(jsonPath("$.tokenType").exists())
             .andExpect(jsonPath("$.id").exists())
             .andExpect(jsonPath("$.email").value(DEFAULT_EMAIL))
             .andExpect(jsonPath("$.username").value(DEFAULT_USERNAME))
@@ -139,7 +149,13 @@ public class AuthTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(loginRequest)))
             .andExpect(status().isOk()) // 200
-            .andExpect(jsonPath("$.token").exists());
+            .andExpect(jsonPath("$.accessToken").exists())
+            .andExpect(jsonPath("$.refreshToken").exists())
+            .andExpect(jsonPath("$.tokenType").exists())
+            .andExpect(jsonPath("$.id").exists())
+            .andExpect(jsonPath("$.email").value(DEFAULT_EMAIL))
+            .andExpect(jsonPath("$.username").value(DEFAULT_USERNAME))
+            .andExpect(jsonPath("$.createdAt").exists());
     }
 
     // ----------------------------------------------------------------------------------- //
@@ -230,8 +246,10 @@ public class AuthTest {
         mockMvc.perform(get("/api/users/me")
             .header("Authorization", "Bearer "+token))
             .andExpect(status().isOk())
+            .andExpect(jsonPath("$.id").exists())
             .andExpect(jsonPath("$.email").value(DEFAULT_EMAIL))
-            .andExpect(jsonPath("$.username").value(DEFAULT_USERNAME));
+            .andExpect(jsonPath("$.username").value(DEFAULT_USERNAME))
+            .andExpect(jsonPath("$.createdAt").exists());
     }
 
     // 14). 회원가입 Validation 실패 : 400
@@ -266,10 +284,11 @@ public class AuthTest {
 
     // 16). Authorization : ADMIN - USER 200 403
     @Test
-    void adminEndpoint_withUserRole_returns403() throws Exception{
+    void getOtherUserProfile_withUserRole_returns403() throws Exception{
         // given : userToken
         String userToken=signUpAndLoginDefaultUser(); // USER
-        mockMvc.perform(get("/api/users/me")
+        // Long otherUserId = ; // 다른 유저 하나 더 만들어서 ID 얻기
+        mockMvc.perform(get("/api/users/"+otherUserId)
             .header(HttpHeaders.AUTHORIZATION, "Bearer "+userToken))
             .andExpect(status().isForbidden());
     }

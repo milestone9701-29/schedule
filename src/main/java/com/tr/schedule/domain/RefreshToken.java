@@ -46,7 +46,7 @@ public class RefreshToken extends BaseTimeEntity {
     public boolean isExpired(){
         return expiresAt.isBefore(LocalDateTime.now());
     }
-    // 취소할거니
+    // 취소하렴
     public void revoke(){
         this.revoked=true;
     }

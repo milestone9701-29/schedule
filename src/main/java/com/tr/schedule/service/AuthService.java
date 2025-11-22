@@ -110,7 +110,7 @@ public class AuthService {
         String refreshValue=jwtTokenProvider.generateRefreshToken(principal);
 
         // 기존의 토큰 정책 분리 : 단순한 방법으론 user 별로 다 지우고 새로 하나만 생성.
-        refreshTokenRepository.deleteAllByUserId(user.getId());
+        refreshTokenRepository.deleteAllByUser_Id(user.getId());
         // 또는 deleteAllByUser(user)
 
         RefreshToken refreshToken=RefreshToken.issue(

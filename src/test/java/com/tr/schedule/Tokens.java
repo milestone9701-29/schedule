@@ -1,8 +1,9 @@
-package com.tr.schedule;
+/*package com.tr.schedule;
 
 public record Tokens(
     String accessToken,
     String refreshToken
 ) {
-    private Tokens signUpAndLoginDefaultUserTokens(){ return -1;}
+    //private Tokens signUpAndLoginDefaultUserTokens(){ return -1;}
 }
+*/

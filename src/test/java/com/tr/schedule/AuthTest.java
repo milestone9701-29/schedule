@@ -5,7 +5,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 // import com.tr.schedule.dto.auth.AuthTokens;
 import com.tr.schedule.domain.User;
 import com.tr.schedule.dto.auth.LoginRequest;
+import com.tr.schedule.dto.auth.LoginResponse;
 import com.tr.schedule.dto.auth.SignupRequest;
+import com.tr.schedule.dto.auth.SignupResponse;
 import com.tr.schedule.global.security.JwtTokenProvider;
 import com.tr.schedule.repository.UserRepository;
 import org.junit.jupiter.api.Test;
@@ -16,8 +18,11 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.ResultActions;
+import org.springframework.test.web.servlet.ResultMatcher;
 import org.springframework.transaction.annotation.Transactional;
 
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -54,19 +59,50 @@ void login_withValidCredentials_returnsToken() throws Exception {
 @Transactional // Test 끝나면 롤백
 public class AuthTest {
 
-    // 1). 기본 값 상수화
+    // -- 준비 -- //
+    // 1. 기본 값 상수화
     private static final String DEFAULT_EMAIL="testplayer@alwayssleepy.kr";
     private static final String DEFAULT_USERNAME="test_player";
     private static final String DEFAULT_PASSWORD="password00";
 
-    // 2). util
+    // 2. util
     @Autowired private MockMvc mockMvc;
 
     @Autowired private ObjectMapper objectMapper;
     @Autowired private JwtTokenProvider jwtTokenProvider;
     @Autowired private UserRepository userRepository;
 
-    // 3). 회원가입 : email, username, password(request)
+    // 3. POST : url, requestBody, responseType, varargs
+    private <T> T postAndRead(String url, Object requestBody, Class<T> responseType, ResultMatcher... matchers) throws Exception{
+        ResultActions actions=mockMvc.perform(post(url)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsString(requestBody)));
+
+        for(ResultMatcher matcher : matchers){
+            actions=actions.andExpect(matcher);
+        }
+
+        String body=actions.andReturn()
+            .getResponse()
+            .getContentAsString();
+        return objectMapper.readValue(body, responseType);
+    }
+
+    // 4. GET : url, token, responseType, varargs
+    private <T> T getAndRead(String url, String token, Class<T> responseType, ResultMatcher... matchers) throws Exception{
+        ResultActions actions=mockMvc.perform(get(url)
+            .header(HttpHeaders.AUTHORIZATION, "Bearer "+token));
+        for(ResultMatcher matcher : matchers){
+            actions=actions.andExpect(matcher);
+        }
+        String body=actions.andReturn()
+            .getResponse()
+            .getContentAsString();
+
+        return objectMapper.readValue(body, responseType);
+    }
+
+    // 5. signUp
     private void signUp(String email,
                         String username,
                         String password) throws Exception{
@@ -75,13 +111,22 @@ public class AuthTest {
             username,
             password
         );
-        mockMvc.perform(post("/api/auth/signup")
-            .contentType(MediaType.APPLICATION_JSON)
-            .content(objectMapper.writeValueAsString(signupRequest)))
-            .andExpect(status().isCreated()); // 201
+        // when
+        SignupResponse signupResponse=postAndRead(
+            "/api/auth/signup",
+            signupRequest,
+            SignupResponse.class,
+            status().isCreated()
+        );
+
+        // then
+        assertThat(signupResponse.userSummaryResponse().email()).isEqualTo(email);
+        assertThat(signupResponse.userSummaryResponse().username()).isEqualTo(username);
+        assertThat(signupResponse.accessToken()).isNotBlank();
+        assertThat(signupResponse.refreshToken()).isNotBlank();
     }
 
-    // 4). 로그인 : email, Password(request) -> Login + token(String)
+    // 6. Login
     private String loginAndGetAccessToken(String email, String password) throws Exception{
         LoginRequest loginRequest=new LoginRequest(
             email,
@@ -89,12 +134,11 @@ public class AuthTest {
         );
 
         String responseBody=mockMvc.perform(post("/api/auth/login")
-            .contentType(MediaType.APPLICATION_JSON)
-            .content(objectMapper.writeValueAsString(loginRequest)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(loginRequest)))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.accessToken").exists())
             .andExpect(jsonPath("$.refreshToken").exists())
-            .andExpect(jsonPath("$.tokenType").exists())
             .andExpect(jsonPath("$.id").exists())
             .andExpect(jsonPath("$.email").value(DEFAULT_EMAIL))
             .andExpect(jsonPath("$.username").value(DEFAULT_USERNAME))
@@ -104,58 +148,67 @@ public class AuthTest {
             .getContentAsString();
 
         JsonNode root=objectMapper.readTree(responseBody);
-        return root.get("token").asText();
+        return root.get("accessToken").asText();
         /* AuthTokens authResponse = objectMapper.readValue(responseBody, AuthTokens.class);
         return authResponse.token();*/
 
     }
 
-    // 5). 편의 메서드 : 가입 - 로그인
+    // 7. 가입 - 로그인 : 으어 이미 가입 로그인 했는데
     private String signUpAndLoginDefaultUser()throws Exception{
         signUp(DEFAULT_EMAIL,DEFAULT_USERNAME,DEFAULT_PASSWORD);
         return loginAndGetAccessToken(DEFAULT_EMAIL, DEFAULT_PASSWORD);
     }
 
-    // 6). 회원가입 : 201 : Response 값에 맞출 것.
+    // -- Test -- //
+    // 1. 회원가입 : 201
     @Test
     void signUp_WithValidRequest_returnsCreated() throws Exception{
+        // given
         SignupRequest signupRequest=new SignupRequest(
             DEFAULT_EMAIL,
             DEFAULT_USERNAME,
             DEFAULT_PASSWORD
         );
-        mockMvc.perform(post("/api/auth/signup")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(signupRequest)))
-            .andExpect(status().isCreated()) // 201
-            .andExpect(jsonPath("$.accessToken").exists())
-            .andExpect(jsonPath("$.refreshToken").exists())
-            .andExpect(jsonPath("$.tokenType").exists())
-            .andExpect(jsonPath("$.id").exists())
-            .andExpect(jsonPath("$.email").value(DEFAULT_EMAIL))
-            .andExpect(jsonPath("$.username").value(DEFAULT_USERNAME))
-            .andExpect(jsonPath("$.createdAt").exists());
+
+        // when
+        SignupResponse signupResponse=postAndRead(
+            "/api/auth/signup",
+            signupRequest,
+            SignupResponse.class,
+            status().isCreated()
+        );
+
+        // then
+        assertThat(signupResponse.userSummaryResponse().email()).isEqualTo(DEFAULT_EMAIL);
+        assertThat(signupResponse.userSummaryResponse().username()).isEqualTo(DEFAULT_USERNAME);
+        assertThat(signupResponse.accessToken()).isNotBlank();
+        assertThat(signupResponse.refreshToken()).isNotBlank();
     }
 
-    // 7). 로그인 : 200
+    // 2. 로그인 : 200
     @Test
     void login_WithValidCredentials_returnsToken() throws Exception{
-        signUp(DEFAULT_EMAIL,DEFAULT_USERNAME,DEFAULT_PASSWORD);
+        signUp(DEFAULT_EMAIL, DEFAULT_USERNAME, DEFAULT_PASSWORD);
+        // given
         LoginRequest loginRequest=new LoginRequest(
             DEFAULT_EMAIL,
             DEFAULT_PASSWORD
         );
-        mockMvc.perform(post("/api/auth/login")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(loginRequest)))
-            .andExpect(status().isOk()) // 200
-            .andExpect(jsonPath("$.accessToken").exists())
-            .andExpect(jsonPath("$.refreshToken").exists())
-            .andExpect(jsonPath("$.tokenType").exists())
-            .andExpect(jsonPath("$.id").exists())
-            .andExpect(jsonPath("$.email").value(DEFAULT_EMAIL))
-            .andExpect(jsonPath("$.username").value(DEFAULT_USERNAME))
-            .andExpect(jsonPath("$.createdAt").exists());
+
+        // when
+        LoginResponse loginResponse =postAndRead(
+            "/api/auth/login",
+            loginRequest,
+            LoginResponse.class,
+            status().isOk()
+        );
+
+        // then
+        assertThat(loginResponse.userSummaryResponse().email()).isEqualTo(DEFAULT_EMAIL);
+        assertThat(loginResponse.userSummaryResponse().username()).isEqualTo(DEFAULT_USERNAME);
+        assertThat(loginResponse.accessToken()).isNotBlank();
+        assertThat(loginResponse.refreshToken()).isNotBlank();
     }
 
     // ----------------------------------------------------------------------------------- //
@@ -172,13 +225,14 @@ public class AuthTest {
             DEFAULT_PASSWORD
         );
         mockMvc.perform(post("/api/auth/signup")
-            .contentType(MediaType.APPLICATION_JSON)
-            .content(objectMapper.writeValueAsString(duplicate)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(duplicate)))
             .andExpect(status().isConflict())
             .andExpect(jsonPath("$.code").value("A409-01"));
 
         // .andExpect(jsonPath("$.code").value("A409-01"));
     }
+
 
     // 9). 비밀번호를 틀리는 케이스 : 401 : A401-01
     @Test
@@ -285,9 +339,13 @@ public class AuthTest {
     // 16). Authorization : ADMIN - USER 200 403
     @Test
     void getOtherUserProfile_withUserRole_returns403() throws Exception{
-        // given : userToken
+        // given : user 1 : DEFAULT_EMAIL
         String userToken=signUpAndLoginDefaultUser(); // USER
-        // Long otherUserId = ; // 다른 유저 하나 더 만들어서 ID 얻기
+        // 가입 : other_user
+        signUp("other@alwayssleepy.kr","other_user",DEFAULT_PASSWORD);
+        // Long anotherUserId : 다른 유저 하나 더 만들어서 ID 얻기
+        Long otherUserId=userRepository.findByEmail("other@alwayssleepy.kr").orElseThrow().getId();
+
         mockMvc.perform(get("/api/users/"+otherUserId)
             .header(HttpHeaders.AUTHORIZATION, "Bearer "+userToken))
             .andExpect(status().isForbidden());

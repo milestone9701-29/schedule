@@ -1,5 +1,6 @@
 package com.tr.schedule.global.security;
 
+import com.tr.schedule.dto.auth.AuthTokens;
 import com.tr.schedule.global.exception.ErrorCode;
 import com.tr.schedule.global.exception.JwtAuthenticationException;
 import io.jsonwebtoken.*;
@@ -25,16 +26,33 @@ public class JwtTokenProvider {
     // application.yml - .properties
     // jwt:
     //  secret: "randoms3cretkey_example_aaaaaah1201931randoms3cretkey_example_aaaaaah1201931"
-    @Value("${jwt.secret}")
-    private String secretKey; // HS256 : HMAC 비밀키 문자열.
+    private final SecretKey secretKey; // HMAC
+    private final long accessTokenValidityMs;
+    private final long refreshTokenValidityMs;
 
-    // 1시간
-    private final long ACCESS_TOKEN_VALIDITY_MS = 60*60*1000L; // 1ms 0.001초 : 분리 필요. : @Value("${jwt.access-token-validity-ms}");
+    public JwtTokenProvider(
+        @Value("${jwt.secret}") String secret,
+        @Value("${jwt.access-token-validity-ms:3600000}") long accessTokenValidityMs,
+        @Value("${jwt.refresh-token-validity-ms:1209600000}") long refreshTokenValidityMs
+    ) {
+        this.secretKey=Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
+        this.accessTokenValidityMs=accessTokenValidityMs;
+        this.refreshTokenValidityMs=refreshTokenValidityMs;
+    }
+    // @Value("${jwt.access-token-validity-ms}");
+
+    public String generateAccessToken(CustomUserDetails userDetails){
+        return generateToken(userDetails, accessTokenValidityMs, "access");
+    }
+
+    public String generateRefreshToken(CustomUserDetails userDetails){
+        return generateToken(userDetails, refreshTokenValidityMs, "refresh");
+    }
 
     // token 생성
-    public String generateToken(CustomUserDetails userDetails){
+    private String generateToken(CustomUserDetails userDetails, long accessTokenValidityMs, String type){
         Date now=new Date(); // 현재 시각.
-        Date expiry=new Date(now.getTime()+ACCESS_TOKEN_VALIDITY_MS); // 현재 + 1시간 뒤 만료.
+        Date expiry=new Date(now.getTime()+accessTokenValidityMs); // 현재 + 1시간 뒤 만료.
 
         /*
         userDetails.getAuthorities() : Collection<? extends GrantedAuthority>
@@ -48,6 +66,7 @@ public class JwtTokenProvider {
         .subject(userDetails.getId().toString()) : subject : UserId(toString()) : getUserId 등등..
         .claim("email",userDetails.getUsername()) : CustomClaim : username(=이메일)
         .claim("roles",roles) : 예시 : "roles", ["ROLE_USER", "ROLE_ADMIN"]
+        .claim("type", type) : access refresh 구분
         .issuedAt(now) : 발급된 시간 : 지금
         .expiration(expiry) : 만료일 : 1시간
         .signWith(getSigningKey()) : HS256 서명
@@ -58,19 +77,26 @@ public class JwtTokenProvider {
             .subject(userDetails.getId().toString())
             .claim("email", userDetails.getUsername())
             .claim("roles", roles)
+            .claim("type", type)
             .issuedAt(now)
             .expiration(expiry)
-            .signWith(getSigningKey())
+            .signWith(getSigningKey(), Jwts.SIG.HS256)
             .compact();
     }
+
+    public AuthTokens generateTokens(CustomUserDetails userDetails){
+        String access=generateAccessToken(userDetails);
+        String refresh=generateRefreshToken(userDetails);
+        return new AuthTokens(access, refresh);
+    }
+
 
     /* secretKey 문자열 : UTF-8 : 한국어 유니코드.
     Keys.hmacShaKeyFor(keyBytes); : 길이 32byte 이상.
     내부적으로 SecretKey 만들어서 반환
     -> signWith, verifyWith 양쪽에 사용. */
     private SecretKey getSigningKey(){
-        byte[] keyBytes=secretKey.getBytes(StandardCharsets.UTF_8);
-        return Keys.hmacShaKeyFor(keyBytes);
+        return secretKey;
     }
 
     /*
@@ -132,15 +158,12 @@ public class JwtTokenProvider {
         Date past=new Date(now.getTime()-1000L*60); // 1분 전.
 
         return Jwts.builder()
-            .setSubject(String.valueOf(userId))
-            .setIssuedAt(past)
-            .setExpiration(past) // 이미 만료
-            .signWith(secretKey, SignatureAlgorithm.HS256)
+            .subject(String.valueOf(userId))
+            .issuedAt(past)
+            .expiration(past) // 이미 만료
+            .signWith(getSigningKey(), Jwts.SIG.HS256)
             .compact();
     }
-
-
-
 }
 /*
 JWT

@@ -6,8 +6,8 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class UserMapper {
-    public UserProfileResponse toUserProfileResponse(User user){ // 출력 값
-        return new UserProfileResponse(
+    public UserSummaryResponse toUserSummaryResponse(User user){ // 출력 값
+        return new UserSummaryResponse(
             user.getId(),
             user.getUsername(),
             user.getEmail(),

@@ -1,12 +1,12 @@
 package com.tr.schedule.service;
 
 
+import com.tr.schedule.dto.user.UserSummaryResponse;
 import com.tr.schedule.global.exception.ErrorCode;
 import com.tr.schedule.global.exception.ResourceNotFoundException;
 
 import com.tr.schedule.domain.User;
 import com.tr.schedule.dto.user.UserMapper;
-import com.tr.schedule.dto.user.UserProfileResponse;
 import com.tr.schedule.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -24,10 +24,10 @@ public class UserService{
     private final UserMapper userMapper;
 
     @Transactional(readOnly=true)
-    public UserProfileResponse getProfile(Long userId) {
+    public UserSummaryResponse getProfile(Long userId) {
         User user = getUserOrThrow(userId);
 
-        return userMapper.toUserProfileResponse(user);
+        return userMapper.toUserSummaryResponse(user);
     }
 
     // 404

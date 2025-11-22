@@ -2,7 +2,7 @@ package com.tr.schedule;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-// import com.tr.schedule.dto.auth.AuthResponse;
+// import com.tr.schedule.dto.auth.AuthTokens;
 import com.tr.schedule.domain.User;
 import com.tr.schedule.dto.auth.LoginRequest;
 import com.tr.schedule.dto.auth.SignupRequest;
@@ -17,7 +17,6 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.test.web.servlet.MockMvc.*;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -97,7 +96,7 @@ public class AuthTest {
 
         JsonNode root=objectMapper.readTree(responseBody);
         return root.get("token").asText();
-        /* AuthResponse authResponse = objectMapper.readValue(responseBody, AuthResponse.class);
+        /* AuthTokens authResponse = objectMapper.readValue(responseBody, AuthTokens.class);
         return authResponse.token();*/
 
     }
@@ -189,7 +188,7 @@ public class AuthTest {
         // when : 없는 이메일로 로그인
         LoginRequest loginRequest=new LoginRequest(
             DEFAULT_EMAIL,
-            "wrong-password"
+            DEFAULT_PASSWORD
         );
 
         // then
@@ -207,7 +206,8 @@ public class AuthTest {
     @Test
     void getMyProfile_withOutToken_returns401() throws Exception{
         mockMvc.perform(get("/api/users/me"))
-            .andExpect(status().isUnauthorized());
+            .andExpect(status().isUnauthorized())
+            .andExpect(jsonPath("$.code").value("A401-02"));
 
     }
 
@@ -216,7 +216,8 @@ public class AuthTest {
     void getMyProfile_withGarbageToken_returns401() throws Exception{
         mockMvc.perform(get("/api/users/me")
             .header("Authorization", "Bearer but-"))
-            .andExpect(status().isUnauthorized());
+            .andExpect(status().isUnauthorized())
+            .andExpect(jsonPath("$.code").value("A401-03"));
     }
 
     // 13). 정상 토큰 : 200 + UserProfiles
@@ -243,8 +244,7 @@ public class AuthTest {
         mockMvc.perform(post("/api/auth/signup")
             .contentType(MediaType.APPLICATION_JSON)
             .content(objectMapper.writeValueAsString(signupRequest)))
-            .andExpect(jsonPath("$.code").value("A401-01"));
-
+            .andExpect(status().isBadRequest());
     }
 
     // 15). 만료 토큰 : 401 : JwtTokenProvider.generateExpiredToken(userId);
@@ -258,7 +258,8 @@ public class AuthTest {
         // when and then
         mockMvc.perform(get("/api/users/me")
             .header(HttpHeaders.AUTHORIZATION, "Bearer "+expiredToken))
-            .andExpect(status().isUnauthorized());
+            .andExpect(status().isUnauthorized())
+            .andExpect(jsonPath("$.code").value("A401-03"));
     }
 
     // 16). Authorization : ADMIN - USER 200 403
@@ -270,6 +271,5 @@ public class AuthTest {
             .header(HttpHeaders.AUTHORIZATION, "Bearer "+userToken))
             .andExpect(status().isForbidden());
     }
-
 }
 

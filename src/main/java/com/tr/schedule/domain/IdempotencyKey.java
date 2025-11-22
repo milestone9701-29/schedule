@@ -9,16 +9,10 @@ import lombok.*;
 @NoArgsConstructor(access= AccessLevel.PROTECTED)
 @Entity
 // 유저마다 같은 Key를 쓸 수 있다 : @Table(uniqueConstraints=@UniqueConstraint(ColumnNames={"key","userId"})) : key, userId 복합 유니크
-@Table(
-    name="idempotency_Keys",
-    uniqueConstraints=@UniqueConstraint(
-        name="uk_idempotency_keys_key_user",
-        columnNames={"user_id", "idempotency_key"}
-    )
-)
+@Table(name="idempotency_keys",
+    uniqueConstraints=@UniqueConstraint(name="uk_idempotency_keys_key_user", columnNames={"user_id", "idempotency_keys"}))
 public class IdempotencyKey extends BaseTimeEntity{
-    @Id
-    @GeneratedValue(strategy= GenerationType.IDENTITY)
+    @Id @GeneratedValue(strategy= GenerationType.IDENTITY)
     private Long id;
     // Key Column : unique=true -> 서비스 전체에서 이 문자열은 한 번만 사용
     @Column(name="idempotency_key", nullable=false, length=64) // key length() 64

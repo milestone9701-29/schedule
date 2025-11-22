@@ -8,12 +8,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(
-    name="comment_idempotency_keys",
-    uniqueConstraints=@UniqueConstraint(name="uk_comment_idempotency_key",
-        columnNames={"user_id", "schedule_id", "idempotency_key"}
-    )
-)
+@Table(name="comment_idempotency_keys",
+    uniqueConstraints=@UniqueConstraint(name="uk_comment_idempotency_keys_key_user", columnNames={"user_id", "schedule_id", "idempotency_key"}))
 @Getter
 @NoArgsConstructor(access= AccessLevel.PROTECTED)
 public class CommentIdempotencyKey extends BaseTimeEntity{

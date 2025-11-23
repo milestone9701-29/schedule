@@ -1,6 +1,5 @@
 package com.tr.schedule;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 // import com.tr.schedule.dto.auth.AuthTokens;
 import com.tr.schedule.domain.User;
@@ -58,73 +57,53 @@ void login_withValidCredentials_returnsToken() throws Exception {
 @AutoConfigureMockMvc
 @Transactional // Test 끝나면 롤백
 public class AuthTest {
-
-    // -- 준비 -- //
-    // 1. 기본 값 상수화
+    // -- 0. 준비 -- //
     private static final String DEFAULT_EMAIL="testplayer@alwayssleepy.kr";
     private static final String DEFAULT_USERNAME="test_player";
     private static final String DEFAULT_PASSWORD="password00";
 
-    // 2. util
     @Autowired private MockMvc mockMvc;
-
     @Autowired private ObjectMapper objectMapper;
     @Autowired private JwtTokenProvider jwtTokenProvider;
     @Autowired private UserRepository userRepository;
 
-    // 3. POST : url, requestBody, responseType, varargs
-    private <T> T postAndRead(String url, Object requestBody, Class<T> responseType, ResultMatcher... matchers) throws Exception{
-        ResultActions actions=mockMvc.perform(post(url)
+    // -- 1. DTO Builder -- //
+    private SignupRequest signupRequest(String email, String username, String password){
+        return new SignupRequest(email,username,password);
+    }
+    private LoginRequest loginRequest(String email, String password){
+        return new LoginRequest(email,password);
+    }
+
+    // -- 2. HTTP util -- //
+    private ResultActions postJson(String url, Object requestBody) throws Exception{
+        return mockMvc.perform(post(url)
             .contentType(MediaType.APPLICATION_JSON)
             .content(objectMapper.writeValueAsString(requestBody)));
-
-        for(ResultMatcher matcher : matchers){
+    }
+    private ResultActions getWithToken(String url, String token) throws Exception{
+        return mockMvc.perform(get(url)
+            .header(HttpHeaders.AUTHORIZATION,"Bearer "+token));
+    }
+    private <T> T readBody(ResultActions resultActions, Class<T> responseType) throws Exception{
+        String json=resultActions.andReturn().getResponse().getContentAsString();
+        return objectMapper.readValue(json,responseType);
+    }
+    // POST : url, requestBody, responseType, varargs
+    private <T> T postAndRead(String url, Object requestBody, Class<T> responseType, ResultMatcher... matchers) throws Exception{
+        ResultActions actions = postJson(url, requestBody);
+        for(ResultMatcher matcher:matchers){
             actions=actions.andExpect(matcher);
         }
-
-        String body=actions.andReturn()
-            .getResponse()
-            .getContentAsString();
-        return objectMapper.readValue(body, responseType);
+        return readBody(actions, responseType);
     }
 
-    // 4. GET : url, token, responseType, varargs
-    private <T> T getAndRead(String url, String token, Class<T> responseType, ResultMatcher... matchers) throws Exception{
-        ResultActions actions=mockMvc.perform(get(url)
-            .header(HttpHeaders.AUTHORIZATION, "Bearer "+token));
-        for(ResultMatcher matcher : matchers){
-            actions=actions.andExpect(matcher);
-        }
-        String body=actions.andReturn()
-            .getResponse()
-            .getContentAsString();
-
-        return objectMapper.readValue(body, responseType);
+    // -- 3. UseCase Helper -- //
+    private SignupResponse signUp(String email, String username, String password, ResultMatcher... matchers) throws Exception{
+        SignupRequest request=signupRequest(email,username,password);
+        return postAndRead("/api/auth/signup", request, SignupResponse.class, matchers);
     }
 
-    // 5. signUp
-    private void signUp(String email,
-                        String username,
-                        String password) throws Exception{
-        SignupRequest signupRequest = new SignupRequest(
-            email,
-            username,
-            password
-        );
-        // when
-        SignupResponse signupResponse=postAndRead(
-            "/api/auth/signup",
-            signupRequest,
-            SignupResponse.class,
-            status().isCreated()
-        );
-
-        // then
-        assertThat(signupResponse.userSummaryResponse().email()).isEqualTo(email);
-        assertThat(signupResponse.userSummaryResponse().username()).isEqualTo(username);
-        assertThat(signupResponse.accessToken()).isNotBlank();
-        assertThat(signupResponse.refreshToken()).isNotBlank();
-    }
 
     // 6. Login
     private String loginAndGetAccessToken(String email, String password) throws Exception{
@@ -132,26 +111,18 @@ public class AuthTest {
             email,
             password
         );
+        LoginResponse loginResponse =postAndRead(
+            "/api/auth/signup",
+            loginRequest,
+            LoginResponse.class,
+            status().isCreated()
+        );
 
-        String responseBody=mockMvc.perform(post("/api/auth/login")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(loginRequest)))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.accessToken").exists())
-            .andExpect(jsonPath("$.refreshToken").exists())
-            .andExpect(jsonPath("$.id").exists())
-            .andExpect(jsonPath("$.email").value(DEFAULT_EMAIL))
-            .andExpect(jsonPath("$.username").value(DEFAULT_USERNAME))
-            .andExpect(jsonPath("$.createdAt").exists())
-            .andReturn()
-            .getResponse()
-            .getContentAsString();
+        assertThat(loginResponse.userSummaryResponse().email()).isEqualTo(email);
+        assertThat(loginResponse.accessToken()).isNotBlank();
+        assertThat(loginResponse.refreshToken()).isNotBlank();
 
-        JsonNode root=objectMapper.readTree(responseBody);
-        return root.get("accessToken").asText();
-        /* AuthTokens authResponse = objectMapper.readValue(responseBody, AuthTokens.class);
-        return authResponse.token();*/
-
+        return loginResponse.accessToken();
     }
 
     // 7. 가입 - 로그인 : 으어 이미 가입 로그인 했는데

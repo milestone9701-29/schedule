@@ -1,6 +1,6 @@
 package com.tr.schedule.global.security;
 
-import com.tr.schedule.dto.auth.AuthTokens;
+
 import com.tr.schedule.global.exception.ErrorCode;
 import com.tr.schedule.global.exception.JwtAuthenticationException;
 import io.jsonwebtoken.*;
@@ -82,12 +82,6 @@ public class JwtTokenProvider {
             .expiration(expiry)
             .signWith(getSigningKey(), Jwts.SIG.HS256)
             .compact();
-    }
-
-    public AuthTokens generateTokens(CustomUserDetails userDetails){
-        String access=generateAccessToken(userDetails);
-        String refresh=generateRefreshToken(userDetails);
-        return new AuthTokens(access, refresh);
     }
 
 

@@ -10,3 +10,4 @@ import java.lang.annotation.Target;
 public @interface AuthUser{
 
 }
+// 커스텀 어노테이션

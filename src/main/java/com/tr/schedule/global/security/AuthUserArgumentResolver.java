@@ -16,12 +16,17 @@ import org.springframework.web.method.support.ModelAndViewContainer;
 @RequiredArgsConstructor
 public class AuthUserArgumentResolver implements HandlerMethodArgumentResolver {
 
+    // 1. @Override public boolean supportParameter(MethodParameter parameter) : 검증
+    // 1). parameter.hasParameterAnnotation(AuthUser.class) : 해당 parameter가 AuthUser의 Annotation을 갖고 있는지?
+    // 2). 해당 Parameter와 CurrentUser의 Parameter Type이 일치하는지?
     @Override
     public boolean supportsParameter(MethodParameter parameter){
         return parameter.hasParameterAnnotation(AuthUser.class)
             &&parameter.getParameterType().equals(CurrentUser.class);
     }
 
+    // 1. public Object resolveArgument(MethodParameter parameter, ModelAndViewContainer mavContainer, NativeWebRequest webRequest, WebDataBinderFactory binderFactory)
+    // 1).
     @Override
     public Object resolveArgument(
         MethodParameter parameter,
@@ -36,5 +41,4 @@ public class AuthUserArgumentResolver implements HandlerMethodArgumentResolver {
 
         return CurrentUser.from(principal);
     }
-
 }

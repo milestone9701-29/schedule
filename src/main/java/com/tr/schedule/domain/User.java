@@ -25,10 +25,14 @@ public class User extends BaseTimeEntity {
     private Long id;
     @Column(nullable=false, length=30)
     private String username;
-    @Column(name="email", nullable=false, unique=true, length=100)
+    @Column(name="email", nullable=false, length=100)
     private String email;
     @Column(name="password_hash", nullable=false, length=100)
     private String passwordHash;
+    @Column(length=254)
+    private String profileImageUrl;
+    @Column(length=200)
+    private String bio;
 
     // roles : 권한 부여
     @ElementCollection(fetch=FetchType.EAGER)
@@ -45,7 +49,7 @@ public class User extends BaseTimeEntity {
 
     // 직접 작성 : username, email, pwHash
     @Builder
-    public User(String username, String email, String passwordHash){
+    private User(String username, String email, String passwordHash){
         this.username=username;
         this.email=email;
         this.passwordHash=passwordHash;
@@ -57,5 +61,19 @@ public class User extends BaseTimeEntity {
     }
     public Set<Role> getRoles(){ // 불변 Set
         return Collections.unmodifiableSet(roles);
+    }
+
+    public void changeEmail(String email){
+        this.email=email;
+    }
+
+    public void changePassword(String password){
+        this.passwordHash=password;
+    }
+
+    public void changeProfile(String username, String profileImageUrl, String bio){
+        this.username = username;
+        this.profileImageUrl = profileImageUrl;
+        this.bio = bio;
     }
 }

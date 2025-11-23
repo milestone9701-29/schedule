@@ -86,6 +86,8 @@ public class AuthService {
         return issueTokens(user);
     }
 
+
+
     // 정리용 헬퍼 메서드
     private User findUserByEmailOrThrow(LoginRequest request){
         return userRepository.findByEmail(request.getEmail()) // 검사 + 대입

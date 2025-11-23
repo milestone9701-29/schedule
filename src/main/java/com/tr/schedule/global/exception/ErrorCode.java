@@ -48,8 +48,9 @@ public enum ErrorCode {
 
     // User
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "U404-01", "존재하지 않는 사용자입니다."),
-    USER_FORBIDDEN(HttpStatus.FORBIDDEN, "U403-01", "해당 사용자에 접근할 수 없습니다.");
-
+    USER_FORBIDDEN(HttpStatus.FORBIDDEN, "U403-01", "해당 사용자에 접근할 수 없습니다."),
+    USER_PASSWORD_MISMATCH(HttpStatus.UNAUTHORIZED, "U401-01", "Password가 올바르지 않습니다."),
+    USER_EMAIL_ALREADY_EXISTS(HttpStatus.CONFLICT, "U409-01", "이미 사용 중인 Email입니다.");
     private final HttpStatus status;
     private final String code;
     private final String defaultMessage;

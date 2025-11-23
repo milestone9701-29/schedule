@@ -35,6 +35,5 @@ public class AuthController{
     public ResponseEntity<AuthTokens> refresh(@RequestHeader("X-Refresh-Token") String refreshToken){
         AuthTokens tokens=authService.refreshAccessToken(refreshToken);
         return ResponseEntity.ok(tokens);
-
     }
 }

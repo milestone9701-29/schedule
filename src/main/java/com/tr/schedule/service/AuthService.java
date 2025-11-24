@@ -3,7 +3,6 @@ package com.tr.schedule.service;
 
 import com.tr.schedule.domain.RefreshToken;
 import com.tr.schedule.dto.auth.*;
-import com.tr.schedule.dto.user.UserSummaryResponse;
 import com.tr.schedule.global.exception.*;
 import com.tr.schedule.domain.Role;
 import com.tr.schedule.domain.User;
@@ -49,7 +48,7 @@ public class AuthService {
         // 6). 식별
         AuthTokens tokens=issueTokens(user);
         // 7). 압축
-        UserSummaryResponse summary = authMapper.toUserSummary(user);
+        SignupResult summary = authMapper.toResult(user);
         // 7). 깔쌈하게 슛
         return new SignupResponse(tokens.accessToken(), tokens.refreshToken(), summary);
     }
@@ -64,7 +63,7 @@ public class AuthService {
         // 3). 식별
         AuthTokens tokens=issueTokens(user);
         // 4). 압축
-        UserSummaryResponse summary = authMapper.toUserSummary(user);
+        SignupResult summary = authMapper.toResult(user);
         // 5). 깔쌈하게 슛
         return new LoginResponse(tokens.accessToken(), tokens.refreshToken(), summary);
     }

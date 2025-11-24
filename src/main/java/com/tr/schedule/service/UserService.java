@@ -1,7 +1,6 @@
 package com.tr.schedule.service;
 
 
-import com.tr.schedule.dto.auth.SignupRequest;
 import com.tr.schedule.dto.user.*;
 import com.tr.schedule.global.exception.BusinessException;
 import com.tr.schedule.global.exception.ErrorCode;
@@ -18,7 +17,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 
-
 @Service
 @RequiredArgsConstructor
 public class UserService{
@@ -28,16 +26,18 @@ public class UserService{
     private final PasswordEncoder passwordEncoder;
 
     @Transactional(readOnly=true)
-    public UserSummaryResponse getProfile(Long currentUserId) {
+    public UserProfileResponse getProfile(Long currentUserId) {
         User user = getUserOrThrow(currentUserId);
 
-        return userMapper.toUserSummaryResponse(user);
+        return userMapper.toUserProfile(user);
     }
 
     @Transactional
-    public void changeProfile(Long currentUserId, UserChangeProfileRequest request){
+    public UserProfileResponse changeProfile(Long currentUserId, UserChangeProfileRequest request){
         User user = getUserOrThrow(currentUserId);
         user.changeProfile(request.getUsername(), request.getProfileImageUrl(), request.getBio());
+
+        return userMapper.toUserProfile(user);
     }
 
     @Transactional
@@ -82,7 +82,4 @@ public class UserService{
             throw new BusinessException(ErrorCode.USER_EMAIL_ALREADY_EXISTS);
         }
     }
-
-
-
 }

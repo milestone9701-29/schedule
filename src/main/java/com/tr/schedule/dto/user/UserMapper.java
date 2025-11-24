@@ -6,11 +6,14 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class UserMapper {
-    public UserSummaryResponse toUserSummaryResponse(User user){ // 출력 값
-        return new UserSummaryResponse(
+    public UserProfileResponse toUserProfile(User user){ // 출력 값
+        return new UserProfileResponse(
             user.getId(),
             user.getUsername(),
             user.getEmail(),
+            user.getProfileImageUrl(),
+            user.getBio(),
+            user.getVersion(),
             user.getCreatedAt()
         );
     }

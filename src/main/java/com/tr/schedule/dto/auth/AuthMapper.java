@@ -2,7 +2,6 @@ package com.tr.schedule.dto.auth;
 
 import com.tr.schedule.domain.User;
 
-import com.tr.schedule.dto.user.UserSummaryResponse;
 import org.springframework.stereotype.Component;
 
 // 25-11-16 : 이거 건드린게 오늘 제일 잘한 일인 듯? Mapper Class
@@ -16,8 +15,8 @@ public class AuthMapper{
             .passwordHash(encodedPassword)
             .build();
     }
-    public UserSummaryResponse toUserSummary(User user){ // 출력 값
-        return new UserSummaryResponse(
+    public SignupResult toResult(User user){ // 출력 값
+        return new SignupResult(
             user.getId(),
             user.getUsername(),
             user.getEmail(),

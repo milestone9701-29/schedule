@@ -1,10 +1,7 @@
 package com.tr.schedule.controller;
 
 
-import com.tr.schedule.dto.user.ChangeEmailRequest;
-import com.tr.schedule.dto.user.ChangePasswordRequest;
-import com.tr.schedule.dto.user.UserChangeProfileRequest;
-import com.tr.schedule.dto.user.UserSummaryResponse;
+import com.tr.schedule.dto.user.*;
 import com.tr.schedule.global.security.AuthUser;
 import com.tr.schedule.global.security.CurrentUser;
 import com.tr.schedule.service.UserService;
@@ -24,9 +21,10 @@ public class UserController {
     private final UserService userService;
 
     // 내 정보
-    @GetMapping("/me")
-    public ResponseEntity<UserSummaryResponse> getMyProfile(@AuthUser CurrentUser currentUser) {
-        return ResponseEntity.ok(userService.getProfile(currentUser.id()));
+    @GetMapping("/me/profile")
+    public ResponseEntity<UserProfileResponse> getMyProfile(@AuthUser CurrentUser currentUser) {
+        UserProfileResponse body=userService.getProfile(currentUser.id());
+        return ResponseEntity.ok(body);
     }
 
     @PatchMapping("/me/password")
@@ -40,15 +38,16 @@ public class UserController {
         return ResponseEntity.noContent().build();
     }
     @PatchMapping("/me/profile")
-    public ResponseEntity<Void> changeProfile(@AuthUser CurrentUser currentUser, @Valid @RequestBody UserChangeProfileRequest request) {
-        userService.changeProfile(currentUser.id(), request);
-        return ResponseEntity.noContent().build();
+    public ResponseEntity<UserProfileResponse> changeProfile(@AuthUser CurrentUser currentUser, @Valid @RequestBody UserChangeProfileRequest request) {
+        UserProfileResponse body=userService.changeProfile(currentUser.id(), request);
+        return ResponseEntity.ok(body);
     }
 
     // 특정 유저 정보 조회 (관리자 or 공개범위)
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/{userId}")
-    public ResponseEntity<UserSummaryResponse> getUserProfile(@PathVariable Long userId) {
-        return ResponseEntity.ok(userService.getProfile(userId));
+    public ResponseEntity<UserProfileResponse> getUserProfile(@PathVariable Long userId) {
+        UserProfileResponse body=userService.getProfile(userId);
+        return ResponseEntity.ok(body);
     }
 }

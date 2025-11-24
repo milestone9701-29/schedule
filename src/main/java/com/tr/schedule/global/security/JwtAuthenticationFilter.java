@@ -31,8 +31,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter { // JSON WEB 
         String header = request.getHeader(AUTHORIZATION_HEADER);
 
         // header : null != header가 "Bearer "(공백 포함 7 : header.substring(7))을 문자열 토큰에 저장.
-
-        // 1). Authorization Header체크 -> 없으면 다음으로.
+        // 1. 경우의 수
+        // 1). header==null : 아예 Authorization header가 없는 경우 : public 접근 또는 login 하지 않은 요청.
+        // 2). !header.startsWith(AUTHORIZATION_HEADER_PREFIX) : Authorization header는 있으나, Bearer 가 아닌 경우.
+        // -> filterChain.doFilter(request, response) : SecurityContext에 아무 것도 안 넣고, 다른 Security 필터가 처리.
+        // * shouldNotFilter()
         if (header == null || !header.startsWith(AUTHORIZATION_HEADER_PREFIX)) {
             filterChain.doFilter(request, response);
             return;
@@ -53,33 +56,47 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter { // JSON WEB 
         // instanceof CustomUserDetails.
         UserDetails userDetails = customUserDetailsService.loadUserById(userId);
 
-        // 5). Authentication 생성. Spring Security 표준 Authentication 구현체
-        // principal = userDetails
-        // credentials = null : PW 다시 비교 하지 않음.
-        // authorities = 권한 목록
+        /* 5). Authentication 생성. Spring Security 표준 Authentication 구현체
+        2. UsernamePasswordAuthenticationToken -> 로그인된 인증 객체 역할
+        1). Spring Security : 로그인 한 사람 : Authentication Type으로 관리.
+        2). 그 중에서, 가장 흔한 구현체가 UsernamePasswordAuthenticationToken.
+        3). 용도
+        (1). 로그인 시도할 때 : username + password 들고 있는 상태.
+        (2). 인증 성공 이후 : UserDetails, Authorization 들고 있는 상태.
+        * JWT 필터 : 토큰 검증 -> userId -> DB에서 UserDetails 꺼내기 -> 로그인 확인을 Security에 알림 */
+        // principal = userDetails : 누가 로그인 했는지 ? -> 주체. : SecurityContextHolder
+        // -> @AuthenticationPrincipal 또는 @AuthUser resolver가 controller에 전달.
+        // credentials = null : password : login 시점에 Password 검증이 이미 끝났고, JWT는 한 번 인증된 결과만 들고 온다.
+        // 즉, 다시 PW 비교 할 필요 없으므로, null로 둠.
+        // authorities = 권한, Role 목록 : hasRole("USER"), @PreAuthorize("hasRole('ADMIN')")
         UsernamePasswordAuthenticationToken authentication
             = new UsernamePasswordAuthenticationToken(
                 userDetails,
             null,
             userDetails.getAuthorities());
-        // 요청 정보를 details에 채워두기 : log, 감사 대비.
+        // 3. setDetails()
+        // 1). 부가정보 : remote IP, session ID 등
+        // 2). 응용 :
+        // (1). audit log : 로그 감사
+        // (2). 어디서 로그인 했는지?
+        // (3). 보안 정책
+        // -> log, 추적할 때 쓸 수 있는 MetaData.
         authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
-        // SecurityContext에 authentication 저장.
+        // SecurityContext에 authentication 저장. : 이 요청의 SecurityContext에는 Authentication 상태.
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
         filterChain.doFilter(request, response);
     }
-    // shouldNotFilter : /api/auth/** ~ Skip
+    // 1. shouldNotFilter : /api/auth/** ~ Skip
+    // 1). JwtAuthenticationFilter 자체를 건너 뛸 것인지 결정.
+    // 2). true : 해당 요청은 JWT 파싱, 검증을 아예 하지 않는다. 따라서 SecurityContext도 건드리지 않으며, 다음 필터로 보낸다.
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request){
         String path=request.getRequestURI();
-        return path.startsWith("/api/auth/")  // Signup, Login
-            || path.startsWith("/h2-console") // DB
+        return path.startsWith("/h2-console") // DB
             || path.startsWith("/actuator/health"); // Health Checking용 Endpoint
     }
-
-
 }
 /*
 Client -> filterChain

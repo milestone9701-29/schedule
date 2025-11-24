@@ -15,7 +15,7 @@ URL 기반 인가 : ant matcher
 METHOD 기반 인가
 */
 
-
+// Authorization 상수 또는 배열화
 @Configuration
 @EnableWebSecurity // Enable Spring Security filter Chain
 @EnableMethodSecurity(prePostEnabled=true) // @PreAuthorize, @PostAuthorize 같은 메서드 인가 허용.

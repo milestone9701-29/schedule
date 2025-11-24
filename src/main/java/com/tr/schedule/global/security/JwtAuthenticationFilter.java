@@ -19,6 +19,8 @@ import java.io.IOException;
 public class JwtAuthenticationFilter extends OncePerRequestFilter { // JSON WEB TOKEN
     private final JwtTokenProvider jwtTokenProvider;
     private final CustomUserDetailsService customUserDetailsService;
+    private static final String AUTHORIZATION_HEADER = "Authorization";
+    private static final String AUTHORIZATION_HEADER_PREFIX = "Bearer ";
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -26,16 +28,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter { // JSON WEB 
                                     FilterChain filterChain) throws ServletException, IOException {
 
         // request header : Authorization
-        String header = request.getHeader("Authorization");
+        String header = request.getHeader(AUTHORIZATION_HEADER);
 
         // header : null != header가 "Bearer "(공백 포함 7 : header.substring(7))을 문자열 토큰에 저장.
 
         // 1). Authorization Header체크 -> 없으면 다음으로.
-        if (header == null || !header.startsWith("Bearer ")) {
+        if (header == null || !header.startsWith(AUTHORIZATION_HEADER_PREFIX)) {
             filterChain.doFilter(request, response);
             return;
         }
-        String token = header.substring(7); // "Bearer "(7자)
+        String token = header.substring(AUTHORIZATION_HEADER.length()); // "Bearer "(7자)
 
         // 2). 토큰 검증(토큰 만료, 위조, 형식 등)
         // jwtTokenProvider가 토큰 서명 유무, 만료, 형식 등을 검사.

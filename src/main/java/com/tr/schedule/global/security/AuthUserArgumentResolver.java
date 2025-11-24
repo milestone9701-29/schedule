@@ -22,7 +22,7 @@ public class AuthUserArgumentResolver implements HandlerMethodArgumentResolver {
     // 2). 해당 Parameter와 CurrentUser의 Parameter Type이 일치하는지?
     @Override
     public boolean supportsParameter(MethodParameter parameter){
-        // 여러 Resolver가 있다 가정했을 때의 충돌 방지.
+        // 여러 Resolver가 있다 가정했을 때의 충돌 방지. : 조건을 좁게 잡는 식으로 접근.
         return parameter.hasParameterAnnotation(AuthUser.class)
             &&parameter.getParameterType().equals(CurrentUser.class);
     }

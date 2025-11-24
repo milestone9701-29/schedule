@@ -15,6 +15,8 @@ URL 기반 인가 : ant matcher
 METHOD 기반 인가
 */
 
+// 한 서버에 보안 정책이 다른 둘을 공존시키는 방법 : SecurityFilterChain을 여러 개 쓰는 것.
+// 다른 형태의 보안 정책이 필요한 경우에 따른 filter 분리 및 Order로 순번 처리에 대해 고민해볼 것.
 // Authorization 상수 또는 배열화
 @Configuration
 @EnableWebSecurity // Enable Spring Security filter Chain
@@ -34,14 +36,24 @@ public class SecurityConfig {
     public JwtAuthenticationFilter jwtAuthenticationFilter() {
         return new JwtAuthenticationFilter(jwtTokenProvider, customUserDetailsService);
     }
-    /*
-    .csrf(csrf -> csrf.disable()) : 쿠키 세션 쓰지 않고, JWT만 사용하므로 비활성화
-     SessionCreationPolicy.STATELESS : HttpSession 미사용. 매 요청마다 JWT로 인증 재구성. */
+
+    /*  Spring Security filterChain을 어떻게 만들 것인지 설정하는 Builder
+    1. 서순
+    1). Application 시작 -> Spring이 HttpSecurity를 하나 만들어서 이 Method에 넣어줌 -> .csrf() .sessionManagement() .authorizeHttpRequests() 체이닝 호출
+    -> filterChain 구성, Session 쓸 것인지, csrf 쓸 것인지, 어떤 URL에 어떤 권한을 부여할 것인지.
+    2). http.build() : SecurityFilterChain을 만들어 Bean으로 내보냄.
+     */
     @Bean
     public SecurityFilterChain securityFilterChain(
         HttpSecurity http,
         JwtAuthenticationFilter jwtAuthenticationFilter
         ) throws Exception {
+
+        /*
+        .csrf(csrf -> csrf.disable()) : 쿠키 + 세션 기반 로그인에서 의미 있는 공격 벡터 :
+         * 쿠키 세션 쓰지 않고, JWT만 사용하므로 비활성화.
+         SessionCreationPolicy.STATELESS : HttpSession 만들지 않음. 매 요청마다 JWT로 인증 재구성.
+         -> 서버가 “이 유저 로그인 상태야”를 서버 메모리(HttpSession)에 안 들고 간다. */
         http
             .csrf(csrf -> csrf.disable())
             .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

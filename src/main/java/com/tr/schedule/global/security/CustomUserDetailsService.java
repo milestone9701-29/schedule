@@ -1,6 +1,9 @@
 package com.tr.schedule.global.security;
 
 import com.tr.schedule.domain.User;
+import com.tr.schedule.global.exception.BusinessAccessDeniedException;
+import com.tr.schedule.global.exception.BusinessException;
+import com.tr.schedule.global.exception.ErrorCode;
 import com.tr.schedule.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -19,17 +22,30 @@ public class CustomUserDetailsService implements UserDetailsService {
     // AuthenticationEntryPoint / AccessDeniedHandler
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException{
-        User user = userRepository.findByEmail(email)
-            .orElseThrow(() -> new UsernameNotFoundException("Invalid credentials" + email)); // 시큐리티 전용 예외
+        User user=findByEmailOrThrow(email);
         return new CustomUserDetails(user);
     }
 
 
     // JWT 안의 id로 조회하는 헬퍼.
     public UserDetails loadUserById(Long id) {
-        User user = userRepository.findById(id)
-            .orElseThrow(()-> new UsernameNotFoundException("Invalid credentials" + id)); // 시큐리티 전용 예외
+        User user = findByIdOrThrow(id); // 시큐리티 전용 예외
+        checkBanned(user);
         return new CustomUserDetails(user);
+    }
+
+    private User findByEmailOrThrow(String email){
+        return userRepository.findByEmail(email)
+            .orElseThrow(()-> new UsernameNotFoundException("Invalid credentials" + email)); // 시큐리티 전용 예외
+    }
+    private User findByIdOrThrow(Long userId){
+        return userRepository.findById(userId)
+            .orElseThrow(()->new UsernameNotFoundException("Invalid credentials" + userId));
+    }
+    private void checkBanned(User user){
+        if(user.isBanned()){
+            throw new BusinessAccessDeniedException(ErrorCode.USER_BANNED); // 403
+        }
     }
 }
 

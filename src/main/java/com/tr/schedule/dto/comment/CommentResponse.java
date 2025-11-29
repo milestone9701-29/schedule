@@ -13,6 +13,7 @@ public class CommentResponse {
     Long authorId;
     String authorName;
     String content;
+    Long version;
     LocalDateTime createdAt;
     LocalDateTime updatedAt;
 }

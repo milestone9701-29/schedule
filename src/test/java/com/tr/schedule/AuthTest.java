@@ -62,6 +62,9 @@ public class AuthTest {
     private static final String DEFAULT_USERNAME="test_player";
     private static final String DEFAULT_PASSWORD="password00";
 
+    private static final String TOKEN_PREFIX = "Bearer ";
+
+
     @Autowired private MockMvc mockMvc;
     @Autowired private ObjectMapper objectMapper;
     @Autowired private JwtTokenProvider jwtTokenProvider;
@@ -83,7 +86,7 @@ public class AuthTest {
     }
     private ResultActions getWithToken(String url, String token) throws Exception{
         return mockMvc.perform(get(url)
-            .header(HttpHeaders.AUTHORIZATION,"Bearer "+token));
+            .header(HttpHeaders.AUTHORIZATION,TOKEN_PREFIX+token));
     }
     private <T> T readBody(ResultActions resultActions, Class<T> responseType) throws Exception{
         String json=resultActions.andReturn().getResponse().getContentAsString();
@@ -118,9 +121,9 @@ public class AuthTest {
             status().isCreated()
         );
 
-        assertThat(loginResponse.userSummaryResponse().email()).isEqualTo(email);
         assertThat(loginResponse.accessToken()).isNotBlank();
         assertThat(loginResponse.refreshToken()).isNotBlank();
+        assertThat(loginResponse.authResult()).isEqualTo(email);
 
         return loginResponse.accessToken();
     }
@@ -151,10 +154,11 @@ public class AuthTest {
         );
 
         // then
-        assertThat(signupResponse.userSummaryResponse().email()).isEqualTo(DEFAULT_EMAIL);
-        assertThat(signupResponse.userSummaryResponse().username()).isEqualTo(DEFAULT_USERNAME);
+
         assertThat(signupResponse.accessToken()).isNotBlank();
         assertThat(signupResponse.refreshToken()).isNotBlank();
+        assertThat(signupResponse.authResult().email()).isEqualTo(DEFAULT_EMAIL);
+        assertThat(signupResponse.authResult().username()).isEqualTo(DEFAULT_USERNAME);
     }
 
     // 2. 로그인 : 200
@@ -176,10 +180,10 @@ public class AuthTest {
         );
 
         // then
-        assertThat(loginResponse.userSummaryResponse().email()).isEqualTo(DEFAULT_EMAIL);
-        assertThat(loginResponse.userSummaryResponse().username()).isEqualTo(DEFAULT_USERNAME);
         assertThat(loginResponse.accessToken()).isNotBlank();
         assertThat(loginResponse.refreshToken()).isNotBlank();
+        assertThat(loginResponse.authResult().email()).isEqualTo(DEFAULT_EMAIL);
+        assertThat(loginResponse.authResult().username()).isEqualTo(DEFAULT_USERNAME);
     }
 
     // ----------------------------------------------------------------------------------- //

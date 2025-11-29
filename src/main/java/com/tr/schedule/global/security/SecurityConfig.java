@@ -50,10 +50,10 @@ public class SecurityConfig {
         ) throws Exception {
 
         /*
-        .csrf(csrf -> csrf.disable()) : 쿠키 + 세션 기반 로그인에서 의미 있는 공격 벡터 :
+        .csrf(csrf -> csrf.disable()) : 쿠키 + 세션 기반 로그인에서 의미 있는 공격 벡터 : 사이트 간 공격 위조 : cross-site request forgery
          * 쿠키 세션 쓰지 않고, JWT만 사용하므로 비활성화.
          SessionCreationPolicy.STATELESS : HttpSession 만들지 않음. 매 요청마다 JWT로 인증 재구성.
-         -> 서버가 “이 유저 로그인 상태야”를 서버 메모리(HttpSession)에 안 들고 간다. */
+         -> 서버가 유저 로그인 상태를 서버 메모리(HttpSession)에 들고 가지 않음. */
         http
             .csrf(csrf -> csrf.disable())
             .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -79,7 +79,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
 
                 // MANAGER, ADMIN,  공통 관리 영역("/api/manage/**") : 구현 중.
-                .requestMatchers("/api/manage/**").hasAnyRole("MANAGER", "ADMIN")
+                //.requestMatchers("/api/manage/**").hasAnyRole("MANAGER", "ADMIN")
 
                 // User info : USER
                 .requestMatchers("/api/users/me").hasRole("USER")

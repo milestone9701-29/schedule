@@ -41,9 +41,8 @@ public class ScheduleService {
 
     private final ScheduleRepository scheduleRepository;
     private final ScheduleMapper scheduleMapper;
-    private final UserRepository userRepository;
     private final IdempotencyKeyRepository idempotencyKeyRepository;
-
+    private final BusinessReader businessReader;
 
     // -- Service Method Lv.3 : CurrentUser + id + Req DTO + idempotencyKey -- //
     @Transactional
@@ -72,7 +71,7 @@ public class ScheduleService {
                                            Long scheduleId,
                                            ScheduleUpdateRequest request){
         // 1). scheduleId 기반으로 조회
-        Schedule schedule = getScheduleOrThrow(scheduleId);
+        Schedule schedule = businessReader.getScheduleOrThrow(scheduleId);
         // 2). Authorization - 정합성 체크
         validateAccess(currentUser, schedule);
         // 3). Check Version : DB vs Client : schedule.update(a, b, request.getVersion()) -> if
@@ -86,7 +85,7 @@ public class ScheduleService {
     @Transactional
     public void deleteSchedule(CurrentUser currentUser, Long scheduleId){
         // 1). 변환
-        Schedule schedule = getScheduleOrThrow(scheduleId);
+        Schedule schedule = businessReader.getScheduleOrThrow(scheduleId);
         // 2). equals : 정리 예정
         validateAccess(currentUser, schedule);
         // 3). 실제 내용 : 삭제
@@ -96,7 +95,7 @@ public class ScheduleService {
     @Transactional(readOnly=true)
     public Page<ScheduleResponse> listUserSchedules(CurrentUser currentUser, Pageable pageable){
         // 1). 변환 : owner
-        User owner = getUserOrThrow(currentUser.id());
+        User owner = businessReader.getUserOrThrow(currentUser.id());
         // 2). 실제 내용.
         Page<Schedule> page = scheduleRepository.findAllByOwnerOrderByUpdatedAtDesc(owner, pageable);
         // 3). 반환.
@@ -111,19 +110,9 @@ public class ScheduleService {
 
     // -------------------------------------------- HELPER : Lv.2 -------------------------------------------- //
     private Schedule createNewSchedule(CurrentUser currentUser, ScheduleCreateRequest request){
-        User owner = getUserOrThrow(currentUser.id());
+        User owner = businessReader.getUserOrThrow(currentUser.id());
         Schedule schedule = Schedule.of(owner, request.getTitle(), request.getContent());
         return scheduleRepository.save(schedule);
-    }
-    // -------------------------------------------- HELPER : Lv.1 -------------------------------------------- //
-    // -----------------  DB HELPER : currentUser.id() ----------------- //
-    private User getUserOrThrow(Long userId){
-        return userRepository.findById(userId)
-            .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.USER_NOT_FOUND));
-    }
-    private Schedule getScheduleOrThrow(Long scheduleId){
-        return scheduleRepository.findById(scheduleId)
-            .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.SCHEDULE_NOT_FOUND));
     }
 
     // ----------------- Check Validation ----------------- //
@@ -144,7 +133,7 @@ public class ScheduleService {
         return idempotencyKeyRepository
             .findByIdempotencyKeyAndUserId(idempotencyKey, currentUser.id()) // 값이 있으면 그 안의 값을 변환, 없으면 Optional.empty() 유지
             .map(IdempotencyKey::getScheduleId) // key -> key.getScheduleId(). : Optional<IdempotencyKey> -> Optional<Long>
-            .map(this::getScheduleOrThrow) // id->this.getScheduleOrThrow(id) : Optional<Long> -> Optional<Schedule>
+            .map(this.businessReader::getScheduleOrThrow) // id->this.businessReader.getScheduleOrThrow(id) : Optional<Long> -> Optional<Schedule>
             .map(scheduleMapper::toScheduleResponse); // Optional<Schedule> -> Optional<ScheduleResponse>
     }
     private void registerIdempotencyKey(String idempotencyKey, CurrentUser currentUser, Schedule schedule){

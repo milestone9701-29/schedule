@@ -24,6 +24,7 @@ public enum ErrorCode {
     // JWT
     JWT_EXPIRED(HttpStatus.UNAUTHORIZED, "JWT_401_EXPIRED", "token이 만료되었습니다."),
     JWT_INVALID(HttpStatus.UNAUTHORIZED, "JWT_401_INVALID", "유효하지 않은 token입니다."),
+    JWT_INVALID_TYPE(HttpStatus.BAD_REQUEST, "JWT_400_INVALID_TYPE", "잘못된 token type입니다."),
 
     // Auth
     AUTH_EMAIL_ALREADY_EXISTS(HttpStatus.CONFLICT, "A409-01", "이미 사용 중인 Email입니다."),
@@ -50,7 +51,8 @@ public enum ErrorCode {
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "U404-01", "존재하지 않는 사용자입니다."),
     USER_FORBIDDEN(HttpStatus.FORBIDDEN, "U403-01", "해당 사용자에 접근할 수 없습니다."),
     USER_PASSWORD_MISMATCH(HttpStatus.UNAUTHORIZED, "U401-01", "Password가 올바르지 않습니다."),
-    USER_EMAIL_ALREADY_EXISTS(HttpStatus.CONFLICT, "U409-01", "이미 사용 중인 Email입니다.");
+    USER_EMAIL_ALREADY_EXISTS(HttpStatus.CONFLICT, "U409-01", "이미 사용 중인 Email입니다."),
+    USER_BANNED(HttpStatus.FORBIDDEN, "U403-02", "해당 사용자는 Ban 상태입니다.");
     private final HttpStatus status;
     private final String code;
     private final String defaultMessage;

@@ -1,10 +1,14 @@
 package com.tr.schedule.global.security;
 
+import com.tr.schedule.global.exception.ErrorCode;
+import com.tr.schedule.global.exception.JwtAuthenticationException;
+import io.jsonwebtoken.Claims;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -40,13 +44,20 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter { // JSON WEB 
             filterChain.doFilter(request, response);
             return;
         }
-        String token = header.substring(AUTHORIZATION_HEADER.length()); // "Bearer "(7자)
+        String token = header.substring(AUTHORIZATION_HEADER_PREFIX.length()); // "Bearer "(7자)
 
         // 2). 토큰 검증(토큰 만료, 위조, 형식 등)
         // jwtTokenProvider가 토큰 서명 유무, 만료, 형식 등을 검사.
         // try -> jwtTokenProvider.getUserId(token)을 userId에 Long으로 저장. : parseClaims(token);
         // getUserId(token) : JWT payload(claims)에서 클레임 꺼내는 역할. : JSON 형태.
-        jwtTokenProvider.validateTokenOrThrow(token);
+        Claims claims = jwtTokenProvider.validateAndGetToken(token);
+
+        // type access
+        String type = claims.get("type", String.class);
+
+        if(!"access".equals(type)){
+            throw new JwtAuthenticationException(ErrorCode.JWT_INVALID_TYPE);
+        }
 
         // 3). UserId 뽑은 후
         Long userId = jwtTokenProvider.getUserId(token);
@@ -92,10 +103,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter { // JSON WEB 
     // 1). JwtAuthenticationFilter 자체를 건너 뛸 것인지 결정.
     // 2). true : 해당 요청은 JWT 파싱, 검증을 아예 하지 않는다. 따라서 SecurityContext도 건드리지 않으며, 다음 필터로 보낸다.
     @Override
-    protected boolean shouldNotFilter(HttpServletRequest request){
-        String path=request.getRequestURI();
-        return path.startsWith("/h2-console") // DB
-            || path.startsWith("/actuator/health"); // Health Checking용 Endpoint
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        String path = request.getRequestURI();
+        return path.startsWith("/api/auth/")
+            || path.startsWith("/actuator/health")
+            || path.startsWith("/h2-console");
     }
 }
 /*

@@ -15,11 +15,12 @@ public class AuthMapper{
             .passwordHash(encodedPassword)
             .build();
     }
-    public SignupResult toResult(User user){ // 출력 값
-        return new SignupResult(
+    public AuthResult toResult(User user){ // 출력 값
+        return new AuthResult(
             user.getId(),
             user.getUsername(),
             user.getEmail(),
+            user.isBanned(),
             user.getCreatedAt()
         );
     }

@@ -35,6 +35,7 @@
 - `String accessToken, String refreshToken, UserSummaryResponse userSummaryResponse`
 ### SignUpResponse
 - `String accessToken, String refreshToken, UserSummaryResponse userSummaryResponse`
+
 ## User
 ### UserSummaryResponse
 - `Long id, String username, String email, LocalDateTime createdAt`
@@ -60,6 +61,18 @@
 
 ## Comment
 ### CommentCreateRequest
+- `String content`
 ### CommentUpdateRequest
+- `String content`
 ### CommentResponse
+- `Long id;`
+- `Long authorId;`
+- `String authorName;`
+- `String content;`
+- `Long version;`
+- `LocalDateTime createdAt;`
+- `LocalDateTime updatedAt;`
 ### CommentMapper
+- ` public CommentResponse toCommentResponse(Comment comment){}`
+- `public List<CommentResponse> toCommentResponseList(List<Comment> comments){}`
+

@@ -13,6 +13,10 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
+/*@SQLDelete(sql="UPDATE users SET is_delete = 'Y' WHERE user_id = ?")
+@FilterDef(name="notDeletedUserFilter")
+@Filter(name="notDeletedUserFilter", condition="is_delete ='N'")*/
+
 // id, username, email, pwhash, version
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -33,6 +37,8 @@ public class User extends BaseTimeEntity {
     private String profileImageUrl;
     @Column(length=200)
     private String bio;
+    @Column(nullable=false)
+    private boolean banned; // default=false;
 
     // roles : 권한 부여
     @ElementCollection(fetch=FetchType.EAGER)
@@ -66,14 +72,17 @@ public class User extends BaseTimeEntity {
     public void changeEmail(String email){
         this.email=email;
     }
-
     public void changePassword(String password){
         this.passwordHash=password;
     }
-
     public void changeProfile(String username, String profileImageUrl, String bio){
         this.username = username;
         this.profileImageUrl = profileImageUrl;
         this.bio = bio;
     }
+
+    public void ban(){ this.banned=true; }
+    public void unBan(){ this.banned=false; }
+    public boolean isBanned(){ return banned;}
+
 }

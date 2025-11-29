@@ -29,6 +29,7 @@ public class JwtTokenProvider {
     private final SecretKey secretKey; // HMAC
     private final long accessTokenValidityMs;
     private final long refreshTokenValidityMs;
+    private static final long TEST_EXPIRATION_TOKEN_TIME = 1000L*60;
 
     public JwtTokenProvider(
         @Value("${jwt.secret}") String secret,
@@ -73,6 +74,7 @@ public class JwtTokenProvider {
         .compact() : header.payload.signature 형태의 문자열(JWS)로 직렬화.
          */
 
+
         return Jwts.builder()
             .subject(userDetails.getId().toString())
             .claim("email", userDetails.getUsername())
@@ -99,7 +101,7 @@ public class JwtTokenProvider {
     -> Long.parseLong()으로 파싱 : userId(pk) 생성.
      */
     public Long getUserId(String token){
-        Claims claims=parseClaims(token);
+        Claims claims=validateAndGetToken(token);
         return Long.parseLong(claims.getSubject());
     }
 
@@ -115,9 +117,9 @@ public class JwtTokenProvider {
         }
     } */
 
-    public void validateTokenOrThrow(String token){
+    public Claims validateAndGetToken(String token){
         try{
-            parseClaims(token);
+            return parseClaims(token);
         }catch(ExpiredJwtException e){
             throw new JwtAuthenticationException(ErrorCode.JWT_EXPIRED, e);
         } catch(JwtException|IllegalArgumentException e){ // 서명 깨짐, 형식 오류 등..
@@ -132,6 +134,7 @@ public class JwtTokenProvider {
     .parseSignedClaims(token) : 서명된 JWS 파싱
     .getPayload(); : 적재 : payload -> Claims 객체 반환.
     */
+
     public Claims parseClaims(String token){ // 파싱
         return Jwts.parser()
             .verifyWith(getSigningKey())
@@ -149,7 +152,7 @@ public class JwtTokenProvider {
     // test
     public String generateExpiredToken(Long userId){
         Date now=new Date();
-        Date past=new Date(now.getTime()-1000L*60); // 1분 전.
+        Date past=new Date(now.getTime()-TEST_EXPIRATION_TOKEN_TIME); // 1분 전.
 
         return Jwts.builder()
             .subject(String.valueOf(userId))

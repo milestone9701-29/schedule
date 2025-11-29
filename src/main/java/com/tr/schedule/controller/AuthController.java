@@ -1,6 +1,8 @@
 package com.tr.schedule.controller;
 
 import com.tr.schedule.dto.auth.*;
+import com.tr.schedule.global.security.AuthUser;
+import com.tr.schedule.global.security.CurrentUser;
 import com.tr.schedule.service.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -30,6 +32,13 @@ public class AuthController{
 
         // return ResponseEntity.status(HttpStatus.OK).body(new AuthTokens(token, userResponse));
     }
+
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout(@AuthUser CurrentUser currentUser, @RequestHeader("X-Refresh-Token") String refreshToken){
+        authService.logout(currentUser.id(), refreshToken);
+        return ResponseEntity.noContent().build();
+    }
+
 
     @PostMapping("/refresh")
     public ResponseEntity<AuthTokens> refresh(@RequestHeader("X-Refresh-Token") String refreshToken){

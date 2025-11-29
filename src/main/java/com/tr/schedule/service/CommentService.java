@@ -28,10 +28,9 @@ import java.util.Optional;
 public class CommentService {
 
     private final CommentRepository commentRepository;
-    private final UserRepository userRepository;
-    private final ScheduleRepository scheduleRepository;
     private final CommentMapper commentMapper;
     private final CommentIdempotencyKeyRepository commentIdempotencyKeyRepository;
+    private final BusinessReader businessReader;
 
     // -- Service Method Lv.3 : CurrentUser + id + Req DTO + idempotencyKey -- //
     @Transactional
@@ -62,8 +61,8 @@ public class CommentService {
                                          Long scheduleId,
                                          Long commentId, CommentUpdateRequest request) {
         // 1). 변환
-        Schedule schedule=getScheduleOrThrow(scheduleId);
-        Comment comment=getCommentOrThrow(commentId);
+        Schedule schedule=businessReader.getScheduleOrThrow(scheduleId);
+        Comment comment=businessReader.getCommentOrThrow(commentId);
         // 2). equals
         validateAccess(schedule, currentUser, comment);
         // 3). 실제 갱신
@@ -75,8 +74,8 @@ public class CommentService {
     @Transactional
     public void deleteComment(CurrentUser currentUser, Long scheduleId, Long commentId) {
         // 1). 변환
-        Schedule schedule=getScheduleOrThrow(scheduleId);
-        Comment comment=getCommentOrThrow(commentId);
+        Schedule schedule=businessReader.getScheduleOrThrow(scheduleId);
+        Comment comment=businessReader.getCommentOrThrow(commentId);
         // 2). equals
         validateAccess(schedule, currentUser, comment);
         // 3). 삭제
@@ -90,26 +89,12 @@ public class CommentService {
 
     // -------------------------------------------- HELPER : Lv.2 -------------------------------------------- //
     private Comment createNewComment(Long scheduleId, CurrentUser currentUser, CommentCreateRequest request){
-        User owner = getUserOrThrow(currentUser.id());
-        Schedule schedule =  getScheduleOrThrow(scheduleId);
+        User owner = businessReader.getUserOrThrow(currentUser.id());
+        Schedule schedule =  businessReader.getScheduleOrThrow(scheduleId);
         Comment comment = Comment.of(schedule, owner, request.getContent());
         return commentRepository.save(comment);
     }
     // -------------------------------------------- HELPER : Lv.1 -------------------------------------------- //
-    // -----------------  DB HELPER : currentUser.id() ----------------- //
-    private User getUserOrThrow(Long userId){
-        return userRepository.findById(userId)
-            .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.USER_NOT_FOUND));
-    }
-    private Schedule getScheduleOrThrow(Long scheduleId){
-        return scheduleRepository.findById(scheduleId)
-            .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.SCHEDULE_NOT_FOUND));
-    }
-    private Comment getCommentOrThrow(Long commentId){
-        return commentRepository.findById(commentId)
-            .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.COMMENT_NOT_FOUND));
-    }
-
     // ----------------- Check Validation ----------------- //
     // Authorization, 정합성.
     private void validateAccess(Schedule schedule, CurrentUser currentUser, Comment comment) {
@@ -139,7 +124,7 @@ public class CommentService {
         return commentIdempotencyKeyRepository
             .findByIdempotencyKeyAndUserIdAndScheduleId(commentIdempotencyKey, currentUser.id(), scheduleId) // Optional<CommentIdempotencyKey>
             .map(CommentIdempotencyKey::getCommentId)  // key -> key.getCommentId(). : Optional<CommentIdempotencyKey> -> Optional<Long> : commentId
-            .map(this::getCommentOrThrow) // id -> this.getCommentOrThrow(id) : Optional<Long> -> Optional<Comment>
+            .map(this.businessReader::getCommentOrThrow) // id -> this.businessReader.getCommentOrThrow(id) : Optional<Long> -> Optional<Comment>
             .map(commentMapper::toCommentResponse); // Optional<Comment> -> Optional<CommentResponse>
     }
     private void registerCommentIdempotencyKey(String commentIdempotencyKey, CurrentUser currentUser, Long scheduleId, Long commentId){

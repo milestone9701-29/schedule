@@ -38,7 +38,7 @@ public class UserController {
         return ResponseEntity.noContent().build();
     }
     @PatchMapping("/me/profile")
-    public ResponseEntity<UserProfileResponse> changeProfile(@AuthUser CurrentUser currentUser, @Valid @RequestBody UserChangeProfileRequest request) {
+    public ResponseEntity<UserProfileResponse> changeProfile(@AuthUser CurrentUser currentUser, @Valid @RequestBody ChangeProfileRequest request) {
         UserProfileResponse body=userService.changeProfile(currentUser.id(), request);
         return ResponseEntity.ok(body);
     }

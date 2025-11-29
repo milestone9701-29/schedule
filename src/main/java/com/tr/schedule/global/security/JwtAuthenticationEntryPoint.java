@@ -50,6 +50,7 @@ public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
         // code, message, path -> JSON으로 변환할 DTO 완성.
         ErrorResponse body = ErrorResponse.of(errorCode, request.getRequestURI());
 
+
         response.setStatus(errorCode.getStatus().value()); // errorCode 상태.
         response.setContentType("application/json"); // Jackson 형태로
         response.setCharacterEncoding("UTF-8");

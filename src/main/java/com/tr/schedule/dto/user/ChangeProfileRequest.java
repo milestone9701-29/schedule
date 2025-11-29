@@ -8,7 +8,7 @@ import lombok.NoArgsConstructor;
 
 @Getter
 @NoArgsConstructor(access= AccessLevel.PROTECTED)
-public class UserChangeProfileRequest {
+public class ChangeProfileRequest {
     @NotBlank @Size(max=30)
     private String username;
     @Size(max=254)
@@ -16,7 +16,7 @@ public class UserChangeProfileRequest {
     @Size(max=200)
     private String bio;
 
-    public UserChangeProfileRequest(String username, String profileImageUrl, String bio){
+    public ChangeProfileRequest(String username, String profileImageUrl, String bio){
         this.username = username;
         this.profileImageUrl = profileImageUrl;
         this.bio = bio;

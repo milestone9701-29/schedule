@@ -48,7 +48,7 @@ public class AuthService {
         // 6). 식별
         AuthTokens tokens=issueTokens(user);
         // 7). 압축
-        SignupResult summary = authMapper.toResult(user);
+        AuthResult summary = authMapper.toResult(user);
         // 7). 깔쌈하게 슛
         return new SignupResponse(tokens.accessToken(), tokens.refreshToken(), summary);
     }
@@ -60,12 +60,28 @@ public class AuthService {
         User user= findUserByEmailOrThrow(request);
         // 2). Password 검증
         validatePassword(request, user);
-        // 3). 식별
+        // 3). Check Ban
+        checkBanned(user);
+        // 4). 식별
         AuthTokens tokens=issueTokens(user);
-        // 4). 압축
-        SignupResult summary = authMapper.toResult(user);
-        // 5). 깔쌈하게 슛
+        // 5). 압축
+        AuthResult summary = authMapper.toResult(user);
+        // 6). 깔쌈하게 슛
         return new LoginResponse(tokens.accessToken(), tokens.refreshToken(), summary);
+    }
+
+    @Transactional
+    public void logout(Long userId, String refreshTokenValue){
+        // IDOR 방지 : token, userId 둘 다 맞아야 revoke
+        refreshTokenRepository.findByTokenAndUser_Id(refreshTokenValue, userId)
+            .ifPresent(RefreshToken::revoke); // 이미 revoke된 토큰, 없는 토큰이면 ifPresent가 아무 것도 안함.
+        // 컨트롤러에선 항상 204 -> 안전
+        // f:RefreshToken -> revoke = f:RefreshToken -> f(RefreshToken)?
+        /*
+        * refreshTokenRepository.findByTokenAndUser_Id(refreshToken, userId)
+        * .ifPresent(refreshTokenRepository::delete);
+        * 저장된 토큰 없애기.*/
+
     }
 
     // refreshAccessToken
@@ -73,14 +89,21 @@ public class AuthService {
     // 이미 revoke된 토큰이 또 들어오면 ->  이상한 요청으로 보고 error
     @Transactional
     public AuthTokens refreshAccessToken(String refreshTokenValue){
-        RefreshToken refreshToken=refreshTokenRepository.findByToken(refreshTokenValue)
+        // 늙고 병든 토큰
+        RefreshToken oldToken=refreshTokenRepository.findByToken(refreshTokenValue)
             .orElseThrow(()-> new JwtAuthenticationException(ErrorCode.AUTH_REFRESH_TOKEN_EXPIRED)); // 401
-        // token 만료 또는 취소
-        if(refreshToken.isExpired()||refreshToken.isRevoked()){
+        // 만료되었거나, 이미 revoke된 토큰 : 재사용 시도 : 401
+        if(oldToken.isExpired()||oldToken.isRevoked()){
             throw new JwtAuthenticationException(ErrorCode.AUTH_REFRESH_TOKEN_EXPIRED); // 401
         }
         // 직접 찾기
-        User user=refreshToken.getUser();
+        User user=oldToken.getUser();
+
+        // 이전 토큰 : revoke : dirtyChecking으로 update
+        // @Transactional 경계 안에서 영속 상태의 entity의 필드를 바꾸면
+        // 커밋 시점에서 dirty checking으로 update가 나간다
+        oldToken.revoke();
+
 
         return issueTokens(user);
     }
@@ -111,8 +134,10 @@ public class AuthService {
         String refreshValue=jwtTokenProvider.generateRefreshToken(principal);
 
         // 기존의 토큰 정책 분리 : 단순한 방법으론 user 별로 다 지우고 새로 하나만 생성.
-        refreshTokenRepository.deleteAllByUser_Id(user.getId());
+        // refreshTokenRepository.deleteAllByUser_Id(user.getId());
         // 또는 deleteAllByUser(user)
+
+        // -> 기존 토큰 삭제 안합니다. : 로그인 할 때마다 새로운 세션 하나 생기는 구조.
 
         RefreshToken refreshToken=RefreshToken.issue(
             user,
@@ -124,6 +149,11 @@ public class AuthService {
         return new AuthTokens(access, refreshValue);
     }
 
+    private void checkBanned(User user){
+        if(user.isBanned()){
+            throw new BusinessAccessDeniedException(ErrorCode.USER_BANNED); // 403
+        }
+    }
 
 }
 

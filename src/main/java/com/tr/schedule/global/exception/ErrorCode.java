@@ -37,7 +37,7 @@ public enum ErrorCode {
 
     // Schedule
     SCHEDULE_NOT_FOUND(HttpStatus.NOT_FOUND, "S404-01", "존재하지 않는 일정입니다."),
-    SCHEDULE_FORBIDDEN(HttpStatus.FORBIDDEN, "S403-01", "해당 일정에 접근할 수 없습니다."),
+    SCHEDULE_ACCESS_FORBIDDEN(HttpStatus.FORBIDDEN, "S403-01", "해당 일정에 접근할 수 없습니다."),
     SCHEDULE_LIMIT_EXCEEDED(HttpStatus.CONFLICT, "S409-01", "댓글 허용 개수를 초과하였습니다."),
     SCHEDULE_VERSION_CONFLICT(HttpStatus.CONFLICT, "S409-02", "다른 요청에 의해 일정이 먼저 수정되었습니다."),
 

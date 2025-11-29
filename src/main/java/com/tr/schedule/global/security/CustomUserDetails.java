@@ -1,6 +1,6 @@
 package com.tr.schedule.global.security;
 
-import com.tr.schedule.domain.Role;
+import com.tr.schedule.domain.RoleSet;
 import com.tr.schedule.domain.User;
 
 import org.springframework.security.core.GrantedAuthority;
@@ -8,7 +8,6 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
-import java.util.Set;
 
 
 public class CustomUserDetails implements UserDetails{
@@ -16,7 +15,7 @@ public class CustomUserDetails implements UserDetails{
     private final String email;
     private final String username;
     private final String password; // passwordHash
-    private final Set<Role> roles;
+    private final RoleSet roles;
 
     // org.springframework.security.core
     private final Collection<? extends GrantedAuthority> authorities;
@@ -26,7 +25,7 @@ public class CustomUserDetails implements UserDetails{
         this.email=user.getEmail();
         this.username=user.getUsername();
         this.password=user.getPasswordHash();
-        this.roles=user.getRoles(); // Collections.unmodifiableSet(roles);
+        this.roles=user.roleSet(); // Collections.unmodifiableSet(roles);
 
         // org.springframework.security.core.authority.SimpleGrantedAuthority :
         // 도메인 단계 Role -> SimpleGrantedAuthority("ROLE_" + name) 을 거쳐서 Spring Security : GrantedAuthority("ROLE_USER")로 Adapting.
@@ -38,7 +37,7 @@ public class CustomUserDetails implements UserDetails{
     // Service : Get(Read)
     public Long getId(){ return id; }
     public String getEmail(){ return email; }
-    public Set<Role> getRoles(){ return roles; }
+    public RoleSet getRoles(){ return roles; }
 
 
     // SecurityContextHolder.getContext().getAuthentication().getPrincipal()

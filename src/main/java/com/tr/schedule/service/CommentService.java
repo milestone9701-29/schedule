@@ -1,9 +1,6 @@
 package com.tr.schedule.service;
 
-
-import com.tr.schedule.global.exception.BusinessAccessDeniedException;
-import com.tr.schedule.global.exception.ErrorCode;
-import com.tr.schedule.global.exception.ResourceNotFoundException;
+import com.tr.schedule.domain.policy.AccessPolicy;
 import com.tr.schedule.global.security.CurrentUser;
 import com.tr.schedule.domain.*;
 import com.tr.schedule.dto.comment.CommentCreateRequest;
@@ -64,7 +61,7 @@ public class CommentService {
         Schedule schedule=businessReader.getScheduleOrThrow(scheduleId);
         Comment comment=businessReader.getCommentOrThrow(commentId);
         // 2). equals
-        validateAccess(schedule, currentUser, comment);
+        AccessPolicy.ensureCanAccessComment(schedule, currentUser, comment);
         // 3). 실제 갱신
         comment.update(request.getContent(), request.getVersion());
         // 4). 저장.
@@ -77,7 +74,7 @@ public class CommentService {
         Schedule schedule=businessReader.getScheduleOrThrow(scheduleId);
         Comment comment=businessReader.getCommentOrThrow(commentId);
         // 2). equals
-        validateAccess(schedule, currentUser, comment);
+        AccessPolicy.ensureCanAccessComment(schedule, currentUser, comment);
         // 3). 삭제
         commentRepository.delete(comment);
     }
@@ -93,27 +90,6 @@ public class CommentService {
         Schedule schedule =  businessReader.getScheduleOrThrow(scheduleId);
         Comment comment = Comment.of(schedule, owner, request.getContent());
         return commentRepository.save(comment);
-    }
-    // -------------------------------------------- HELPER : Lv.1 -------------------------------------------- //
-    // ----------------- Check Validation ----------------- //
-    // Authorization, 정합성.
-    private void validateAccess(Schedule schedule, CurrentUser currentUser, Comment comment) {
-        // ADMIN, MANAGER : 같은 Schedule 안의 Comment이면, 누구의 것이든 수정 및 삭제가 가능.
-        if (currentUser.hasAnyRoles(Role.MANAGER, Role.ADMIN)) {
-            if (!schedule.getId().equals(comment.getSchedule().getId())) {
-                throw new BusinessAccessDeniedException(ErrorCode.COMMENT_FORBIDDEN);
-            }
-            return;
-        }
-
-        // 저자 체크
-        if (!currentUser.id().equals(comment.getAuthor().getId())) {
-            throw new BusinessAccessDeniedException(ErrorCode.COMMENT_FORBIDDEN);
-        }
-        // schedule 간의 id 체크
-        if (!schedule.getId().equals(comment.getSchedule().getId())) {
-            throw new BusinessAccessDeniedException(ErrorCode.COMMENT_FORBIDDEN);
-        }
     }
 
     // ----------------- IdempotencyKey ----------------- //

@@ -1,9 +1,6 @@
 package com.tr.schedule.service;
 
-
-import com.tr.schedule.global.exception.BusinessAccessDeniedException;
-import com.tr.schedule.global.exception.ErrorCode;
-import com.tr.schedule.global.exception.ResourceNotFoundException;
+import com.tr.schedule.domain.policy.AccessPolicy;
 
 import com.tr.schedule.global.security.CurrentUser;
 import com.tr.schedule.domain.IdempotencyKey;
@@ -16,7 +13,7 @@ import com.tr.schedule.dto.schedule.ScheduleMapper;
 
 import com.tr.schedule.repository.IdempotencyKeyRepository;
 import com.tr.schedule.repository.ScheduleRepository;
-import com.tr.schedule.repository.UserRepository;
+
 import jakarta.annotation.Nullable;
 
 import org.springframework.transaction.annotation.Transactional;
@@ -73,7 +70,7 @@ public class ScheduleService {
         // 1). scheduleId 기반으로 조회
         Schedule schedule = businessReader.getScheduleOrThrow(scheduleId);
         // 2). Authorization - 정합성 체크
-        validateAccess(currentUser, schedule);
+        AccessPolicy.ensureCanAccessSchedule(currentUser, schedule);
         // 3). Check Version : DB vs Client : schedule.update(a, b, request.getVersion()) -> if
         // 4). 수정
         schedule.update(request.getTitle(), request.getContent(), request.getVersion());
@@ -87,7 +84,7 @@ public class ScheduleService {
         // 1). 변환
         Schedule schedule = businessReader.getScheduleOrThrow(scheduleId);
         // 2). equals : 정리 예정
-        validateAccess(currentUser, schedule);
+        AccessPolicy.ensureCanAccessSchedule(currentUser, schedule);
         // 3). 실제 내용 : 삭제
         scheduleRepository.delete(schedule);
     }
@@ -113,16 +110,6 @@ public class ScheduleService {
         User owner = businessReader.getUserOrThrow(currentUser.id());
         Schedule schedule = Schedule.of(owner, request.getTitle(), request.getContent());
         return scheduleRepository.save(schedule);
-    }
-
-    // ----------------- Check Validation ----------------- //
-    // Authorization, 정합성.
-    private void validateAccess(CurrentUser currentUser, Schedule schedule){
-        // ADMIN, MANAGER : 타인의 일정
-        // User Entity로 권한 꺼내는 방법 : if(user.getRoles().contains(Role.ADMIN) || user.getRoles().contains(Role.MANAGER)){ return; }
-        if(currentUser.isAdmin()||currentUser.isManager()){ return; }
-        // User : Owner 일치 시에만 허용.
-        if (!currentUser.id().equals(schedule.getOwner().getId())) { throw new BusinessAccessDeniedException(ErrorCode.USER_FORBIDDEN); }
     }
 
     // ----------------- IdempotencyKey ----------------- //

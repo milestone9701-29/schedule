@@ -10,31 +10,36 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/admin")
+@RequestMapping("/api/admin/users/{userId}")
 public class AdminUserController {
 
     private final AdminUserService adminUserService;
 
-    @PutMapping("/users/{userId}/ban")
+    @PutMapping("/ban")
     public ResponseEntity<Void> banUser(@PathVariable Long userId){
         adminUserService.banUser(userId);
         return ResponseEntity.noContent().build();
     }
-    @PutMapping("/users/{userId}/unban")
+    @PutMapping("/unban")
     public ResponseEntity<Void> unbanUser(@PathVariable Long userId){
         adminUserService.unbanUser(userId);
         return ResponseEntity.noContent().build();
     }
 
-    @GetMapping("/users/{userId}/detail")
+    @GetMapping("/detail")
     public ResponseEntity<AdminUserDetailResponse> getDetailUserInfo(@PathVariable Long userId){
         AdminUserDetailResponse body=adminUserService.getDetailUserInfo(userId);
         return ResponseEntity.ok().body(body);
     }
 
-    @GetMapping("/users/{userId}/summary")
+    @GetMapping("/summary")
     public ResponseEntity<AdminUserSummaryResponse> getSummaryUserInfo(@PathVariable Long userId){
         AdminUserSummaryResponse body=adminUserService.getSummaryUserInfo(userId);
         return ResponseEntity.ok().body(body);
+    }
+
+    @PostMapping("/roles/admin")
+    public ResponseEntity<Void> grantAdminRole(@PathVariable Long userId, @RequestBody GrantRoleRequest request){
+
     }
 }

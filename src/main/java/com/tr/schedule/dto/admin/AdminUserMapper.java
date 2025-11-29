@@ -1,28 +1,18 @@
 package com.tr.schedule.dto.admin;
 
 import com.tr.schedule.domain.User;
+import com.tr.schedule.dto.user.UserSummaryView;
 import org.springframework.stereotype.Component;
 
 @Component
 public class AdminUserMapper {
-    public AdminUserDetailResponse toDetailResponse(User user){
+    public AdminUserDetailResponse toAdminDetail(User user){
         return new AdminUserDetailResponse(
-            user.getId(),
-            user.getUsername(),
-            user.getEmail(),
-            user.getRoles(),
-            user.isBanned(),
-            user.getCreatedAt(),
+            UserSummaryView.from(user),
             user.getUpdatedAt()
         );
     }
-    public AdminUserSummaryResponse toSummaryResponse(User user){
-        return new AdminUserSummaryResponse(
-            user.getId(),
-            user.getUsername(),
-            user.getEmail(),
-            user.getRoles(),
-            user.isBanned()
-        );
+    public AdminUserSummaryResponse toAdminSummary(User user){
+        return new AdminUserSummaryResponse(UserSummaryView.from(user));
     }
 }

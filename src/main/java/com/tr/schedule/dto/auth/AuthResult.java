@@ -1,10 +1,6 @@
 package com.tr.schedule.dto.auth;
 
-import java.time.LocalDateTime;
+import com.tr.schedule.dto.user.UserSummaryView;
 
-public record AuthResult(
-    Long id,
-    String username,
-    String email,
-    Boolean isBanned,
-    LocalDateTime createdAt) {}
+
+public record AuthResult(UserSummaryView user) {}

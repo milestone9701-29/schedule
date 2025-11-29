@@ -73,9 +73,9 @@ public class SecurityConfig {
             // hayAnyRole("권한명1", "권한명2") : 접근 권한
             .authorizeHttpRequests(auth->auth
                 // 인증 불필요 :  /api/auth/**, /h2-console/** 권한 허용(permitAll())
-                .requestMatchers("/api/auth/**", "/h2-console/**", "/actuator/health").permitAll() // 2025-11-19
+                .requestMatchers("/api/auth/**", "/h2-console/**", "/actuator/health", "/error").permitAll() // 2025-11-29
 
-                // ADMIN 전용 영역 : 추가 필요.
+                // 2025-11-29 : ADMIN : BAN, UNBAN, getUserInfo()
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
 
                 // MANAGER, ADMIN,  공통 관리 영역("/api/manage/**") : 구현 중.
@@ -83,9 +83,6 @@ public class SecurityConfig {
 
                 // User info : USER
                 .requestMatchers("/api/users/me").hasRole("USER")
-
-                // 타인 정보 조회 : MANAGER, ADMIN  : 추가 관리 기능 대비
-                .requestMatchers("/api/users/**").hasAnyRole("MANAGER", "ADMIN")
 
                 // 일정, 댓글 : Login 한 User만.
                 .requestMatchers("/api/schedules/**").hasRole("USER")

@@ -2,6 +2,7 @@ package com.tr.schedule.service;
 
 
 import com.tr.schedule.domain.RefreshToken;
+import com.tr.schedule.domain.policy.UserStatusPolicy;
 import com.tr.schedule.dto.auth.*;
 import com.tr.schedule.global.exception.*;
 import com.tr.schedule.domain.Role;
@@ -48,7 +49,7 @@ public class AuthService {
         // 6). 식별
         AuthTokens tokens=issueTokens(user);
         // 7). 압축
-        AuthResult summary = authMapper.toResult(user);
+        AuthResult summary = authMapper.toAuthResult(user);
         // 7). 깔쌈하게 슛
         return new SignupResponse(tokens.accessToken(), tokens.refreshToken(), summary);
     }
@@ -61,11 +62,11 @@ public class AuthService {
         // 2). Password 검증
         validatePassword(request, user);
         // 3). Check Ban
-        checkBanned(user);
+        UserStatusPolicy.ensureNotBanned(user);
         // 4). 식별
         AuthTokens tokens=issueTokens(user);
         // 5). 압축
-        AuthResult summary = authMapper.toResult(user);
+        AuthResult summary = authMapper.toAuthResult(user);
         // 6). 깔쌈하게 슛
         return new LoginResponse(tokens.accessToken(), tokens.refreshToken(), summary);
     }
@@ -148,13 +149,6 @@ public class AuthService {
 
         return new AuthTokens(access, refreshValue);
     }
-
-    private void checkBanned(User user){
-        if(user.isBanned()){
-            throw new BusinessAccessDeniedException(ErrorCode.USER_BANNED); // 403
-        }
-    }
-
 }
 
 /*

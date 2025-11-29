@@ -1,9 +1,7 @@
 package com.tr.schedule.global.security;
 
 import com.tr.schedule.domain.User;
-import com.tr.schedule.global.exception.BusinessAccessDeniedException;
-import com.tr.schedule.global.exception.BusinessException;
-import com.tr.schedule.global.exception.ErrorCode;
+import com.tr.schedule.domain.policy.UserStatusPolicy;
 import com.tr.schedule.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -30,7 +28,7 @@ public class CustomUserDetailsService implements UserDetailsService {
     // JWT 안의 id로 조회하는 헬퍼.
     public UserDetails loadUserById(Long id) {
         User user = findByIdOrThrow(id); // 시큐리티 전용 예외
-        checkBanned(user);
+        UserStatusPolicy.ensureNotBanned(user);
         return new CustomUserDetails(user);
     }
 
@@ -41,11 +39,6 @@ public class CustomUserDetailsService implements UserDetailsService {
     private User findByIdOrThrow(Long userId){
         return userRepository.findById(userId)
             .orElseThrow(()->new UsernameNotFoundException("Invalid credentials" + userId));
-    }
-    private void checkBanned(User user){
-        if(user.isBanned()){
-            throw new BusinessAccessDeniedException(ErrorCode.USER_BANNED); // 403
-        }
     }
 }
 

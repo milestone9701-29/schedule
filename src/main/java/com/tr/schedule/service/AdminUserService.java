@@ -32,13 +32,13 @@ public class AdminUserService {
     public AdminUserDetailResponse getDetailUserInfo(Long userId){
         User user=businessReader.getUserOrThrow(userId);
 
-        return adminUserMapper.toDetailResponse(user);
+        return adminUserMapper.toAdminDetail(user);
     }
 
     @Transactional(readOnly=true)
     public AdminUserSummaryResponse getSummaryUserInfo(Long userId){
         User user=businessReader.getUserOrThrow(userId);
 
-        return adminUserMapper.toSummaryResponse(user);
+        return adminUserMapper.toAdminSummary(user);
     }
 }

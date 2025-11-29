@@ -3,13 +3,15 @@ package com.tr.schedule.domain;
 // class -> class : extends
 
 // DB : Entity 생성, Table 생성. uniqueKey
+import com.tr.schedule.global.exception.BusinessAccessDeniedException;
+import com.tr.schedule.global.exception.ErrorCode;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.util.Collections;
+
 import java.util.HashSet;
 import java.util.Set;
 
@@ -59,14 +61,7 @@ public class User extends BaseTimeEntity {
         this.username=username;
         this.email=email;
         this.passwordHash=passwordHash;
-    }
-
-    // 추가 : 편의용
-    public void addRole(Role role){
-        roles.add(role);
-    }
-    public Set<Role> getRoles(){ // 불변 Set
-        return Collections.unmodifiableSet(roles);
+        this.roles.add(Role.USER); // default
     }
 
     public void changeEmail(String email){
@@ -85,4 +80,12 @@ public class User extends BaseTimeEntity {
     public void unBan(){ this.banned=false; }
     public boolean isBanned(){ return banned;}
 
+    public void addRole(Role role){
+        roles.add(role);
+    }
+    public void removeRole(Role role){
+        if(role.equals(Role.USER)){ throw new BusinessAccessDeniedException(ErrorCode.USER_FORBIDDEN); }
+        roles.remove(role);
+    }
+    public RoleSet roleSet(){ return RoleSet.of(roles); }
 }

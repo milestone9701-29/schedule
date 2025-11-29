@@ -9,6 +9,7 @@ import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 
 // Stack Trace : 예외 발생 과정에서 호출된 메서드들의 순서와 위치 정보를 나타내는 것.
@@ -56,7 +57,16 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(errorCode.getStatus()).body(body);
     }
 
-    // 5). Exception : 500 : 진짜 서버 버그라서 스택까지 남기는 것.
+    // 5). NoResourceFoundException : 404
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<ErrorResponse> handleNoResourceFound(NoResourceFoundException ex, HttpServletRequest request){
+        ErrorCode errorCode=ErrorCode.NOT_FOUND;
+        log.debug("[NOT_FOUND] {} - {}", request.getRequestURI(), ex.getMessage());
+        ErrorResponse body=ErrorResponse.of(errorCode, request.getRequestURI());
+        return ResponseEntity.status(errorCode.getStatus()).body(body);
+    }
+
+    // 6). Exception : 500 : 진짜 서버 버그라서 스택까지 남기는 것.
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleException(Exception ex, HttpServletRequest request) {
 
@@ -70,3 +80,12 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(errorCode.getStatus()).body(body);
     }
 }
+/*
+*  ex.getBindingResult().getFieldErrors().forEach(err ->
+        log.warn("[VALIDATION] {} {} field={} value={} message={}",
+                request.getMethod(),
+                request.getRequestURI(),
+                err.getField(),
+                err.getRejectedValue(),
+                err.getDefaultMessage())
+    );*/

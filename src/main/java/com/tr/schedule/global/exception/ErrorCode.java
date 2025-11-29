@@ -17,9 +17,10 @@ public enum ErrorCode {
 
     // Common
     BAD_REQUEST(HttpStatus.BAD_REQUEST, "C400-01", "잘못된 요청입니다."),
-    VALIDATION_ERROR(HttpStatus.BAD_REQUEST, "C400-01", "요청 데이터가 유효하지 않습니다."),
+    VALIDATION_ERROR(HttpStatus.BAD_REQUEST, "C400-02", "요청 데이터가 유효하지 않습니다."),
     INTERNAL_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "C500-01", "알 수 없는 오류입니다."),
     VERSION_CONFLICT(HttpStatus.CONFLICT, "C409-01", "다른 요청에 의해 먼저 수정되었습니다."),
+    NOT_FOUND(HttpStatus.NOT_FOUND, "C404-01", "해당 자원을 찾을 수 없습니다."),
 
     // JWT
     JWT_EXPIRED(HttpStatus.UNAUTHORIZED, "JWT_401_EXPIRED", "token이 만료되었습니다."),

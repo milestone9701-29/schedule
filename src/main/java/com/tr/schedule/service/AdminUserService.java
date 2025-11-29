@@ -1,6 +1,7 @@
 package com.tr.schedule.service;
 
 
+import com.tr.schedule.domain.Role;
 import com.tr.schedule.domain.User;
 import com.tr.schedule.dto.admin.AdminUserDetailResponse;
 import com.tr.schedule.dto.admin.AdminUserMapper;
@@ -40,5 +41,27 @@ public class AdminUserService {
         User user=businessReader.getUserOrThrow(userId);
 
         return adminUserMapper.toAdminSummary(user);
+    }
+
+    @Transactional
+    public void grantAdmin(Long userId){
+        User user=businessReader.getUserOrThrow(userId);
+        user.addRole(Role.ADMIN);
+    }
+    @Transactional
+    public void revokeAdmin(Long userId){
+        User user=businessReader.getUserOrThrow(userId);
+        user.removeRole(Role.ADMIN);
+    }
+
+    @Transactional
+    public void grantManager(Long userId){
+        User user=businessReader.getUserOrThrow(userId);
+        user.addRole(Role.MANAGER);
+    }
+    @Transactional
+    public void revokeManager(Long userId){
+        User user=businessReader.getUserOrThrow(userId);
+        user.removeRole(Role.MANAGER);
     }
 }

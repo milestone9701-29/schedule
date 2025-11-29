@@ -1,23 +1,56 @@
-### Auth
-POST http://localhost:8080/api/auth/signup
+@host = http://localhost:8080
+
+### 1) SignUp
+POST {{host}}/api/auth/signup
 Content-Type: application/json
 
-{ "email":"flyingcat@example.com", "username":"flying_cat", "password":"rainbow" }
+{
+  "email": "flyingcat@example.com",
+  "username": "flying_cat",
+  "password": "rainbow0123456"
+}
 
-### Login
-POST http://localhost:8080/api/auth/login
+### 로그인 user1
+POST {{host}}/api/auth/login
 Content-Type: application/json
 
-{ "email":"flyingcat@example.com", "password":"rainbow" }
+{
+  "email": "flyingcat@example.com",
+  "password": "rainbow0123456"
+}
+> {%
+    client.global.set("u1_access",  response.body.accessToken);
+    client.global.set("u1_refresh", response.body.refreshToken);
+    client.global.set("u1_id",      response.body.authResult.user.id);
+%}
 
-### Me
-GET http://localhost:8080/api/users/me
+### 3). Logout
+POST {{host}}/api/auth/logout
+Authorization: Bearer {{u1_access}}
+X-Refresh-Token: {{u1_refresh}}
+Accept: application/json
 
-### Create Schedule
-POST http://localhost:8080/api/schedules
-Content-Type: application/json
+### 4). grantAdmin
+POST {{host}}/api/admin/users/2/roles/admin
+Authorization: Bearer {{u1_access}}
+Accept: application/json
 
-{ "title":"첫 일정", "content":"내용" }
+### 5). grantAdmin
+DELETE {{host}}/api/admin/users/2/roles/admin/revoke
+Authorization: Bearer {{u1_access}}
+Accept: application/json
 
-### List Schedules
-GET http://localhost:8080/api/schedules?page=0&size=10
+### 6) Admin – 유저 상세 조회
+GET {{host}}/api/admin/users/2/summary
+Authorization: Bearer {{u1_access}}
+Accept: application/json
+
+### 7). Ban
+PUT {{host}}/api/admin/users/2/ban
+Authorization: Bearer {{u1_access}}
+Accept: application/json
+
+### 8). unban
+PUT {{host}}/api/admin/users/2/unban
+Authorization: Bearer {{u1_access}}
+Accept: application/json

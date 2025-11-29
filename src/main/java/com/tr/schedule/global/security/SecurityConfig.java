@@ -6,9 +6,12 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+
+import static org.springframework.web.servlet.function.RequestPredicates.headers;
 
 /*
 URL 기반 인가 : ant matcher
@@ -73,13 +76,13 @@ public class SecurityConfig {
             // hayAnyRole("권한명1", "권한명2") : 접근 권한
             .authorizeHttpRequests(auth->auth
                 // 인증 불필요 :  /api/auth/**, /h2-console/** 권한 허용(permitAll())
-                .requestMatchers("/api/auth/**", "/h2-console/**", "/actuator/health", "/error").permitAll() // 2025-11-29
+                .requestMatchers("/api/auth/signup", "/api/auth/login", "/api/auth/refresh", "/h2-console/**", "/actuator/health", "/error").permitAll() // 2025-11-29
 
                 // 2025-11-29 : ADMIN : BAN, UNBAN, getUserInfo()
-                .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                .requestMatchers("/api/admin/**").hasRole("USER")
 
                 // MANAGER, ADMIN,  공통 관리 영역("/api/manage/**") : 구현 중.
-                //.requestMatchers("/api/manage/**").hasAnyRole("MANAGER", "ADMIN")
+                // .requestMatchers("/api/manage/**").hasAnyRole("MANAGER", "ADMIN")
 
                 // User info : USER
                 .requestMatchers("/api/users/me").hasRole("USER")
@@ -89,12 +92,15 @@ public class SecurityConfig {
 
                 // anyRequest().authenticated() : 지정안한 나머지 URL(anyRequest()) : 로그인만 돼 있으면 모두 허용(authenticated())
                 .anyRequest().authenticated()
+
             )
+            .headers(headers -> headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin))
 
             // .addFilterBefore
             // 1. jwtAuthenticationFilter 실행 : Security Context
             // 2. UsernamePasswordAuthenticationFilter 실행 : Form Login 등 다른 인증 방식이 있다면 실행.
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+
 
         return http.build();
     }

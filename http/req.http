@@ -1,0 +1,68 @@
+@host = http://localhost:8080
+
+### 1) SignUp
+POST {{host}}/api/auth/signup
+Content-Type: application/json
+
+{
+  "email": "flyingcat2@example.com",
+  "username": "flying_cat2",
+  "password": "rainbow01234567"
+}
+
+### 로그인 user2
+POST {{host}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "flyingcat2@example.com",
+  "password": "rainbow01234567"
+}
+> {%
+    client.global.set("u2_access",  response.body.accessToken);
+    client.global.set("u2_refresh", response.body.refreshToken);
+    client.global.set("u2_id",      response.body.authResult.user.id);
+%}
+
+
+### 3). Logout
+POST {{host}}/api/auth/logout
+Authorization: Bearer {{u2_refresh}}
+Accept: application/json
+
+
+
+### 4). grantAdmin
+POST {{host}}/api/admin/users/{{id}}/roles/manager
+Authorization: Bearer {{jwt}}
+Accept: application/json
+
+### 5) Admin – 유저 상세 조회
+GET {{host}}/api/admin/users/{{id}}/summary
+Authorization: Bearer {{jwt}}
+Accept: application/json
+
+### 6) Me (USER 정보 확인)
+GET {{host}}/api/users/me/profile
+Authorization: Bearer {{jwt}}
+Accept: application/json
+
+### 7). ChangePassword
+PATCH {{host}}/api/users/me/password
+Authorization: Bearer {{jwt}}
+Content-Type: application/json
+
+{
+  "currentPassword": "rainbow0123456",
+  "newPassword": "rainbow0123456"
+}
+
+### 5) Schedule 생성
+POST {{host}}/api/schedules
+Authorization: Bearer {{jwt}}
+Content-Type: application/json
+
+{
+  "title": "세 번째 일정",
+  "content": "내용"
+}

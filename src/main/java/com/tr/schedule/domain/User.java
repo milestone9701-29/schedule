@@ -61,6 +61,7 @@ public class User extends BaseTimeEntity {
         this.username=username;
         this.email=email;
         this.passwordHash=passwordHash;
+        this.banned=false;
         this.roles.add(Role.USER); // default
     }
 
@@ -78,10 +79,13 @@ public class User extends BaseTimeEntity {
 
     public void ban(){ this.banned=true; }
     public void unBan(){ this.banned=false; }
-    public boolean isBanned(){ return banned;}
+    public boolean isBanned(){ return banned; }
 
     public void addRole(Role role){
         roles.add(role);
+        if(role==Role.ADMIN||role==Role.MANAGER){
+            roles.add(Role.USER);
+        }
     }
     public void removeRole(Role role){
         if(role.equals(Role.USER)){ throw new BusinessAccessDeniedException(ErrorCode.USER_FORBIDDEN); }
